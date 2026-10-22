@@ -1,0 +1,2 @@
+*.abapchunk -text
+*.abap text eol=lf
