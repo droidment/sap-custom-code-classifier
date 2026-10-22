@@ -230,9 +230,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     all_records: List[dict] = []
     totals: Counter = Counter()
     for system in cfg.systems:
-        root = cfg.resolve(system["root"])
+        root = cfg.system_root(system)
         if not root.exists():
-            log(f"[{system['id']}] ERROR root does not exist: {root}")
+            if cfg.fmt(system) == "chunks":
+                log(f"[{system['id']}] ERROR chunked export not rebuilt yet: run `py tools/unchunk.py` first "
+                    f"(expected {root})")
+            else:
+                log(f"[{system['id']}] ERROR root does not exist: {root}")
             return 2
         recs, warnings = walk_system(system, root)
         all_records.extend(recs)

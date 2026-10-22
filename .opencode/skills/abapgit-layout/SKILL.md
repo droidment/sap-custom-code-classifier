@@ -31,3 +31,22 @@ comment lines (often the most honest description of what a program does).
 If an object type is not recognised, the file still appears in `files` of a record whose type is the
 4-letter code from the file name, and the inventory log prints `warn unparsed_filename` for files that do
 not match the pattern at all.
+
+# Chunked export layout (`"format": "chunks"`)
+
+Some systems are exported as plain-text chains: one folder per package (`ZDEV/`) containing
+`z1_0001.abapchunk`, `z1_0002.abapchunk`, ... Chunks are size-based, so an object can be cut across two
+files; objects are separated by marker lines; there is no metadata.
+
+`tools/unchunk.py` (command `/unchunk`) concatenates the chunks of each package in numeric order, detects the
+marker pattern (config `object_marker`, else built-ins: `*** OBJECT <TYPE> <NAME>` comments, `*& Report X`
+header boxes, or plain `REPORT` / `CLASS x DEFINITION` / `INTERFACE x PUBLIC` / `FUNCTION-POOL` statements),
+splits into segments, assembles objects (DEFINITION + IMPLEMENTATION of one class merge; `FUNCTION ...
+ENDFUNCTION` blocks attach to the preceding `FUNCTION-POOL`, or to a synthetic group named from the FM prefix
+with flag `synthetic_fugr`) and writes the abapGit-style files above into `work/unchunked/<SYS>/<package>/`.
+Descriptions come from the first meaningful header comment. `_manifest.jsonl` lists every rebuilt object with
+its segment range and flags. Segments it cannot name go to `work/unchunk_unresolved.json`; the
+`abap-splitter` subagent names them and `unchunk.py --apply-resolution` writes them.
+
+Use `/inspect-chunks SYS PKG` to see the chunk files, numbering gaps and the detected marker before the
+rebuild. The pipeline then treats `work/unchunked/<SYS>` as that system's root; nothing downstream changes.

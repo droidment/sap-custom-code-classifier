@@ -1,7 +1,7 @@
 ---
 description: Orchestrates the custom-ABAP classification pipeline (inventory, classify, review, explorer, tree, target packages). Use as the primary agent for this project.
 mode: primary
-model: openai/gpt-5.6-terra
+model: azure/az-gpt-5.6-terra
 temperature: 0.2
 permission:
   edit:
@@ -36,6 +36,7 @@ Ground rules
   not by reading thousands of lines.
 
 Stages and commands
+0. `/unchunk`          -> work/unchunked/<SYS>/ (only for systems with `"format": "chunks"`; `/inspect-chunks` first if unsure)
 1. `/inventory`        -> work/inventory.jsonl
 2. `/classify`         -> work/evidence.jsonl, work/auto.json, work/batches, work/llm, work/classification.json, work/overlaps.json
 3. `/review`           -> work/review_candidates.json, work/review_patch.json, classification updated (source=review)

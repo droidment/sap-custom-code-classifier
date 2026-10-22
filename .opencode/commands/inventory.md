@@ -1,7 +1,7 @@
 ---
 description: Stage 1 - inventory all abapGit objects from the configured system roots -> work/inventory.jsonl
 agent: sap-migration
-model: openai/gpt-5.6-luna
+model: azure/az-gpt-5.6-luna
 ---
 Run stage 1 (inventory). The script has already been executed; its output follows.
 

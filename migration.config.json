@@ -1,9 +1,9 @@
 {
-  "_comment": "Edit 'systems' to point at the abapGit export root of each company system. Paths may be absolute or relative to this file.",
+  "_comment": "Edit 'systems' to point at the export root of each company system. Paths may be absolute or relative to this file. format: 'abapgit' (default, one folder per package with abapGit-named files) or 'chunks' (one folder per package holding chained <prefix>_<NNNN>.abapchunk text files; run /unchunk first). object_marker: optional regex with named groups type (optional) and name that identifies the line starting each object inside a chunk; leave null to auto-detect.",
   "systems": [
     { "id": "SYSA", "company": "Company A", "root": "C:/exports/SYSA/src" },
     { "id": "SYSB", "company": "Company B", "root": "C:/exports/SYSB/src" },
-    { "id": "SYSC", "company": "Company C", "root": "C:/exports/SYSC/src" }
+    { "id": "SYSC", "company": "Company C", "root": "C:/exports/SYSC", "format": "chunks", "chunk_glob": "*.abapchunk", "object_marker": null }
   ],
   "work_dir": "work",
   "output_dir": "output",

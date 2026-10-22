@@ -220,6 +220,22 @@ def main() -> None:
     w("SYS_B/zdev/zb_ts_log.tabl.xml", tabl_xml("ZB_TS_LOG", "Log table B", [("PERNR", "PERNR_D"), ("HOURS", "CATSHOURS")]))
     w("SYS_B/zdev/zcl_util_string.clas.abap", UTIL_CLASS)
     w("SYS_B/zdev/zcl_util_string.clas.xml", clas_xml("ZCL_UTIL_STRING", "String helpers"))
+    # ---- SYS_C: the SYS_A objects as a chained chunk export with marker lines ----
+    stream = "\n".join([
+        "*** OBJECT PROG ZHR_TS_REPORT ***", HR_TS_REPORT.strip(),
+        "*** OBJECT CLAS ZCL_UTIL_STRING ***", UTIL_CLASS.strip(),
+        "*** OBJECT CLAS ZCL_PO_CHECK ***", PO_CHECK_A.strip().split("CLASS zcl_po_check IMPLEMENTATION.")[0].rstrip(),
+        "*** OBJECT CLAS ZCL_PO_CHECK ***", "CLASS zcl_po_check IMPLEMENTATION." + PO_CHECK_A.strip().split("CLASS zcl_po_check IMPLEMENTATION.")[1],
+        "*** OBJECT CLAS ZCL_DOC_HELPER ***", AMBIG.strip(),
+        "*** OBJECT FUGR ZWF_HR ***", WF_TOP.strip(),
+        "*** OBJECT FUNC Z_WF_HR_START ***", WF_FM.strip(),
+        "*** OBJECT ***", "* fragment with no usable name", "DATA lv_x TYPE i.", "lv_x = 1.",
+    ]) + "\n"
+    size = 900  # small chunks so objects are cut across files
+    for i in range(0, len(stream), size):
+        p = FIX / f"SYS_C/zchunked/z1_{i // size + 1:04d}.abapchunk"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(stream[i: i + size], encoding="utf-8", newline="")   # raw: a chunk may end mid-line
     print(f"fixtures written under {FIX}")
 
 

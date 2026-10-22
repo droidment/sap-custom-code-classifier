@@ -53,7 +53,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     inv = read_jsonl(cfg.inventory_file)
     cls = read_json(cfg.classification_file)["objects"] if cfg.classification_file.exists() else []
     cls_by_key = {o["key"]: o for o in cls}
-    roots = {s["id"]: cfg.resolve(s["root"]) for s in cfg.systems}
+    roots = cfg.roots()
     n_systems = len(cfg.systems)
 
     by_typename: Dict[str, List[dict]] = defaultdict(list)

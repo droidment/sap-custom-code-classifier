@@ -1,7 +1,7 @@
 ---
 description: Designs the target S/4HANA custom-code package hierarchy from the classification and overlap analysis. Writes output/target_packages.md. One-shot, high-judgment task.
 mode: subagent
-model: openai/gpt-5.6-sol
+model: azure/az-gpt-5.6-sol
 temperature: 0.2
 steps: 20
 permission:

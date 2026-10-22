@@ -1,7 +1,7 @@
 ---
 description: Show pipeline state (what exists in work/ and output/) and the next command to run.
 agent: sap-migration
-model: openai/gpt-5.6-luna
+model: azure/az-gpt-5.6-luna
 ---
 Pipeline status:
 !`py tools/status.py --config migration.config.json`

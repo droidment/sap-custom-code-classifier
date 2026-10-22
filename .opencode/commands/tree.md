@@ -1,7 +1,7 @@
 ---
 description: Stage 4b - Markdown tree (output/tree.md), flat CSV for Excel (output/objects.csv) and a copy of classification.json in output/.
 agent: sap-migration
-model: openai/gpt-5.6-luna
+model: azure/az-gpt-5.6-luna
 ---
 Render the tree and CSV. Output:
 !`py tools/render_tree.py --config migration.config.json`

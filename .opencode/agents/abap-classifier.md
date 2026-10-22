@@ -1,7 +1,7 @@
 ---
 description: Classifies one batch of custom ABAP objects into SAP module / submodule / area from the evidence and source excerpt in a work/batches/NNN.json file. Writes work/llm/NNN.json. Invoked by the sap-migration orchestrator per batch.
 mode: subagent
-model: openai/gpt-5.6-terra
+model: azure/az-gpt-5.6-terra
 temperature: 0.1
 steps: 12
 permission:

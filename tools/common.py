@@ -67,6 +67,23 @@ class Config:
     def systems(self) -> List[dict]:
         return self.raw["systems"]
 
+    def fmt(self, system: dict) -> str:
+        """Export format of a system: 'abapgit' (default) or 'chunks'."""
+        return str(system.get("format", "abapgit")).lower()
+
+    def unchunked_dir(self, system: dict) -> Path:
+        return self.work_dir / "unchunked" / system["id"]
+
+    def system_root(self, system: dict) -> Path:
+        """Folder the pipeline reads objects from. For chunked exports that is the rebuilt
+        abapGit-style tree under work/unchunked/<SYS> (created by tools/unchunk.py)."""
+        if self.fmt(system) == "chunks":
+            return self.unchunked_dir(system)
+        return self.resolve(system["root"])
+
+    def roots(self) -> Dict[str, Path]:
+        return {s["id"]: self.system_root(s) for s in self.systems}
+
     @property
     def work_dir(self) -> Path:
         return self.resolve(self.raw["work_dir"])

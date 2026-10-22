@@ -1,7 +1,8 @@
 {
   "systems": [
     { "id": "SYSA", "company": "Fixture Company A", "root": "SYS_A" },
-    { "id": "SYSB", "company": "Fixture Company B", "root": "SYS_B" }
+    { "id": "SYSB", "company": "Fixture Company B", "root": "SYS_B" },
+    { "id": "SYSC", "company": "Fixture Company C (chunked)", "root": "SYS_C", "format": "chunks", "chunk_glob": "*.abapchunk", "object_marker": null }
   ],
   "work_dir": "../_tmp/work",
   "output_dir": "../_tmp/output",

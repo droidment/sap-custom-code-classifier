@@ -1,7 +1,7 @@
 ---
 description: Stage 4a - build the self-contained HTML explorer (output/explorer.html) for management. Optional argument: a page title in quotes.
 agent: sap-migration
-model: openai/gpt-5.6-luna
+model: azure/az-gpt-5.6-luna
 ---
 Build the HTML explorer. Output of the renderer:
 !`py tools/render_html.py --config migration.config.json $ARGUMENTS`

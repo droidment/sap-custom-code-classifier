@@ -1,0 +1,7 @@
+
+  SELECT * FROM swwwihead INTO TABLE @DATA(lt_wi) WHERE wi_rh_task = 'WS90000001'.
+ENDFUNCTION.
+*** OBJECT ***
+* fragment with no usable name
+DATA lv_x TYPE i.
+lv_x = 1.

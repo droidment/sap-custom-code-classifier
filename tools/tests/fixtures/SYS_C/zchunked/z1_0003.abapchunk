@@ -1,0 +1,25 @@
+NG VALUE(rv_ok) TYPE abap_bool.
+ENDCLASS.
+*** OBJECT CLAS ZCL_PO_CHECK ***
+CLASS zcl_po_check IMPLEMENTATION.
+  METHOD check_limit.
+    DATA lv_total TYPE ekpo-netwr.
+    LOOP AT it_ekpo INTO DATA(ls_ekpo).
+      lv_total = lv_total + ls_ekpo-netwr.
+    ENDLOOP.
+    SELECT SINGLE * FROM ekko INTO @DATA(ls_ekko) WHERE ebeln = @is_ekko-ebeln.
+    rv_ok = xsdbool( lv_total < 50000 ).
+    CALL FUNCTION 'BAPI_PO_GETDETAIL1' EXPORTING purchaseorder = is_ekko-ebeln.
+  ENDMETHOD.
+  METHOD if_ex_me_process_po_cust~check.
+    MESSAGE e001(zmm) WITH 'PO limit exceeded'.
+  ENDMETHOD.
+ENDCLASS.
+*** OBJECT CLAS ZCL_DOC_HELPER ***
+* Generic document helper used by finance and purchasing
+CLASS zcl_doc_helper DEFINITION PUBLIC FINAL CREATE PUBLIC.
+  PUBLIC SECTION.
+    METHODS get_doc IMPORTING iv_id TYPE char10 RETURNING VALUE(rv_text) TYPE string.
+ENDCLASS.
+CLASS zcl_doc_helper IMPLEMENTATION.
+  METHOD

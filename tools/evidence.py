@@ -459,7 +459,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     tax = load_taxonomy(cfg.taxonomy_path)
     idx = RuleIndex(tax)
     inv = read_jsonl(cfg.inventory_file)
-    roots = {s["id"]: cfg.resolve(s["root"]) for s in cfg.systems}
+    roots = cfg.roots()
     lookup = build_lookup(inv)
     log(f"evidence: {len(inv)} objects, {len(tax.rules)} rules")
 

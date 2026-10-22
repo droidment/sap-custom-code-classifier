@@ -21,7 +21,20 @@ def main(argv: Optional[List[str]] = None) -> int:
     nxt = None
     for s in cfg.systems:
         root = cfg.resolve(s["root"])
-        lines.append(f"system {s['id']} ({s.get('company','')}): root {'OK' if root.exists() else 'MISSING'} {root}")
+        lines.append(f"system {s['id']} ({s.get('company','')}, {cfg.fmt(s)}): root {'OK' if root.exists() else 'MISSING'} {root}")
+        if cfg.fmt(s) == "chunks":
+            manifest = cfg.unchunked_dir(s) / "_manifest.jsonl"
+            if manifest.exists():
+                rows = read_jsonl(manifest)
+                lines.append(f"  unchunked: {len(rows)} objects in {len({r['package'] for r in rows})} packages -> {cfg.unchunked_dir(s)}")
+            else:
+                lines.append("  unchunked: not run")
+                nxt = nxt or "/unchunk"
+    unresolved = cfg.work_dir / "unchunk_unresolved.json"
+    if unresolved.exists():
+        n = len(read_json(unresolved).get("segments", []))
+        if n:
+            lines.append(f"unchunk: {n} unresolved segments (run /unchunk to let abap-splitter name them)")
     if cfg.inventory_file.exists():
         inv = read_jsonl(cfg.inventory_file)
         lines.append(f"inventory: {len(inv)} objects, " + ", ".join(f"{k}={v}" for k, v in Counter(r['system'] for r in inv).items()))

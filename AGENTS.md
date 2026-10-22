@@ -10,8 +10,11 @@ find overlaps between the systems, and propose the target package design for the
 - Deterministic steps are Python scripts in `tools/`. Run them; do not re-implement their logic in prose.
   Each prints one machine-readable summary line (`INVENTORY_OK ...`, `EVIDENCE_OK ...`, `PREP_OK ...`,
   `MERGE_OK ...`, `OVERLAPS_OK ...`, `EXPLORER_OK ...`, `TREE_OK ...`, `TARGET_OK ...`).
-- LLM work happens only in the subagents (`abap-classifier`, `abap-reviewer`, `abap-architect`) and only
-  on the prepared files (`work/batches/*.json`, `work/review_candidates.json`, `work/target_draft.json`).
+- LLM work happens only in the subagents (`abap-splitter`, `abap-classifier`, `abap-reviewer`, `abap-architect`)
+  and only on the prepared files (`work/unchunk_unresolved.json`, `work/batches/*.json`,
+  `work/review_candidates.json`, `work/target_draft.json`).
+- Systems exported as chained `.abapchunk` files (`"format": "chunks"`) must be rebuilt with `/unchunk`
+  before `/inventory`. The raw chunk folders are read-only like any other root.
   Never classify objects ad hoc in the main conversation.
 - Taxonomy ids (`tools/taxonomy/nodes.json`) are the contract between all stages. Do not invent ids.
   Company-specific rules go in `tools/taxonomy/rules_custom.json`, never in the shipped rule files.
@@ -22,7 +25,9 @@ find overlaps between the systems, and propose the target package design for the
 ## Where things are
 | Path | What |
 |---|---|
-| `migration.config.json` | system roots, thresholds, batch sizes |
+| `migration.config.json` | system roots (+ `format: abapgit|chunks` per system), thresholds, batch sizes |
+| `work/unchunked/<SYS>/` | abapGit-style rebuild of a chunked export (`tools/unchunk.py`, `/unchunk`); the pipeline reads it instead of the raw chunks |
+| `work/unchunk_unresolved.json`, `work/unchunk_resolution.json` | segments the chunk parser could not name; the `abap-splitter` subagent resolves them |
 | `tools/taxonomy/` | `nodes.json` + `rules_*.json` (+ optional `rules_custom.json`) |
 | `work/inventory.jsonl` | one record per object |
 | `work/evidence.jsonl` | signals, scores, heuristic decision, dependency edges |
@@ -35,9 +40,9 @@ find overlaps between the systems, and propose the target package design for the
 | `output/target_packages.md`, `output/object_moves.csv` | proposed S/4 package design and move list |
 
 ## Models
-Default (orchestrator, classifier batches): `openai/gpt-5.6-terra`. One-shot judgment stages
-(`abap-reviewer`, `abap-architect`): `openai/gpt-5.6-sol`. Trivial summaries and `small_model`:
-`openai/gpt-5.6-luna`. Change them in the agent frontmatter under `.opencode/agents/` or in `opencode.json`.
+Default (orchestrator, classifier batches): `azure/az-gpt-5.6-terra`. One-shot judgment stages
+(`abap-reviewer`, `abap-architect`): `azure/az-gpt-5.6-sol`. Trivial summaries and `small_model`:
+`azure/az-gpt-5.6-luna`. Change them in the agent frontmatter under `.opencode/agents/` or in `opencode.json`.
 
 ## Resuming after an interruption
 Every stage is idempotent. Re-run the same command. `/classify` skips batches that already have a result

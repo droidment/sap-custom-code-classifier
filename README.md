@@ -12,7 +12,10 @@ library only. The LLM is used only for the objects the heuristics cannot settle,
 1. Install Python 3.11+ (invoked as `py`) and OpenCode. Configure the OpenAI provider in OpenCode.
 2. Copy this folder next to the exports (anywhere; the config holds the paths).
 3. Edit `migration.config.json`: one entry per system with `id`, `company` and `root` (the folder that
-   contains the package folders; for an abapGit repo that is usually `<repo>/src`).
+   contains the package folders; for an abapGit repo that is usually `<repo>/src`). If a system was exported
+   as chained text chunks (`ZDEV/z1_0001.abapchunk`, `z1_0002.abapchunk`, ...) add `"format": "chunks"`;
+   `/unchunk` rebuilds it into abapGit-style files under `work/unchunked/` before `/inventory`
+   (see "Chunked exports" below).
 4. Optional: `tools/taxonomy/rules_custom.json` with your own Z-tables and naming conventions (see the
    `sap-module-taxonomy` skill in `.opencode/skills/`).
 5. Smoke test without any LLM: `py tools/tests/test_pipeline.py` (runs on synthetic fixtures).
@@ -22,6 +25,8 @@ Start `opencode` in this folder (the `sap-migration` agent is the primary agent)
 
 | Command | What it does | Output |
 |---|---|---|
+| `/inspect-chunks SYS PKG` | chunked exports: show chunk files, gaps and the detected object marker | |
+| `/unchunk` | chunked exports: rebuild objects into `work/unchunked/<SYS>/`, name leftovers with the LLM | `work/unchunked/` |
 | `/inventory` | walk the exports | `work/inventory.jsonl` |
 | `/classify` | score evidence, classify pending batches with the LLM (parallel), merge, overlaps. Re-run until `0 pending`. | `work/classification.json`, `work/overlaps.json` |
 | `/classify --limit 1` | smoke test with one LLM batch | |
@@ -32,7 +37,17 @@ Start `opencode` in this folder (the `sap-migration` agent is the primary agent)
 | `/target-packages` | proposed S/4 package hierarchy and move list (Sol) | `output/target_packages.md`, `output/object_moves.csv` |
 | `/status` | where things stand, what to run next | |
 
-Suggested order for the management report: `/inventory` -> `/classify` (loop) -> `/review` -> `/explorer`.
+Suggested order for the management report: (`/unchunk` for chunked systems) -> `/inventory` -> `/classify`
+(loop) -> `/review` -> `/explorer`.
+
+### Chunked exports
+`tools/unchunk.py` concatenates each package's chunks in numeric order (warns on gaps), auto-detects the
+marker line that starts each object (or uses `object_marker` from the config: a regex with named groups
+`type` (optional) and `name`), rebuilds programs, classes, interfaces and function groups (FUNCTION blocks
+attach to the preceding FUNCTION-POOL, otherwise to a synthetic group flagged `synthetic_fugr`), takes the
+description from the first header comment, and writes `_manifest.jsonl`. Segments it cannot name are listed
+in `work/unchunk_unresolved.json`; `/unchunk` hands those to the `abap-splitter` subagent and applies its
+answers. Re-runs only rebuild packages whose chunk files changed.
 Later: `/tree`, `/target-packages`.
 
 ### Memory and time on large systems
@@ -46,11 +61,13 @@ Later: `/tree`, `/target-packages`.
 ### Models
 | Where | Model |
 |---|---|
-| orchestrator, `/classify` batches (`abap-classifier`) | `openai/gpt-5.6-terra` |
-| `/review` (`abap-reviewer`), `/target-packages` (`abap-architect`) | `openai/gpt-5.6-sol` |
-| `/inventory`, `/explorer`, `/tree`, `/status` summaries, `small_model` | `openai/gpt-5.6-luna` |
+| orchestrator, `/classify` batches (`abap-classifier`), `abap-splitter` | `azure/az-gpt-5.6-terra` |
+| `/review` (`abap-reviewer`), `/target-packages` (`abap-architect`) | `azure/az-gpt-5.6-sol` |
+| `/inventory`, `/explorer`, `/tree`, `/status` summaries, `small_model` | `azure/az-gpt-5.6-luna` |
 
 Change them in the `model:` line of `.opencode/agents/*.md` / `.opencode/commands/*.md` or in `opencode.json`.
+The ids assume the Azure OpenAI provider is registered in OpenCode as `azure`; if yours uses another provider
+id, replace the `azure/` prefix in those files (the deployment names `az-gpt-5.6-*` stay).
 For a cheaper first pass set the classifier to Luna; for a final pass on weak objects set it to Sol and run
 `/classify --min-confidence 0.6`.
 
@@ -65,10 +82,10 @@ against the taxonomy. Details: `.opencode/skills/classification-rules/SKILL.md`.
 ## Layout
 ```
 opencode.json  AGENTS.md  migration.config.json
-.opencode/agents/     sap-migration (primary), abap-classifier, abap-reviewer, abap-architect
-.opencode/commands/   inventory, classify, review, explorer, tree, target-packages, status
+.opencode/agents/     sap-migration (primary), abap-splitter, abap-classifier, abap-reviewer, abap-architect
+.opencode/commands/   inspect-chunks, unchunk, inventory, classify, review, explorer, tree, target-packages, status
 .opencode/skills/     sap-module-taxonomy, abapgit-layout, classification-rules
-tools/                inventory, evidence, prep_batches, merge, overlaps, review_candidates,
+tools/                unchunk, inventory, evidence, prep_batches, merge, overlaps, review_candidates,
                       render_html, render_tree, target_skeleton, status, pending, common
 tools/taxonomy/       nodes.json, rules_*.json  (add rules_custom.json)
 tools/tests/          make_fixtures.py, test_pipeline.py, fixtures/

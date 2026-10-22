@@ -83,7 +83,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     tax = load_taxonomy(cfg.taxonomy_path)
     inv = {r["key"]: r for r in read_jsonl(cfg.inventory_file)}
     evidence = {r["key"]: r for r in read_jsonl(cfg.evidence_file)}
-    roots = {s["id"]: cfg.resolve(s["root"]) for s in cfg.systems}
+    roots = cfg.roots()
     batch_size = int(ccfg.get("batch_size", 20))
 
     rerun = args.min_confidence is not None

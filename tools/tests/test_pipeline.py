@@ -40,10 +40,44 @@ class PipelineTest(unittest.TestCase):
     def load_jsonl(self, p):
         return [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
 
+    def test_00_unchunk(self):
+        out = run("unchunk.py", "--inspect", "SYSC")
+        self.assertIn("object_comment", out)
+        out = run("unchunk.py")
+        self.assertIn("UNCHUNK_OK", out)
+        self.assertIn("unresolved=1", out)
+        rows = self.load_jsonl(self.work / "unchunked" / "SYSC" / "_manifest.jsonl")
+        got = {(r["type"], r["name"]) for r in rows}
+        self.assertEqual(got, {("PROG", "ZHR_TS_REPORT"), ("CLAS", "ZCL_UTIL_STRING"), ("CLAS", "ZCL_PO_CHECK"),
+                               ("CLAS", "ZCL_DOC_HELPER"), ("FUGR", "ZWF_HR")})
+        fugr = next(r for r in rows if r["type"] == "FUGR")
+        self.assertEqual(fugr["fms"], ["Z_WF_HR_START"])
+        # the class cut into DEFINITION + IMPLEMENTATION segments must come back as one file
+        src = (self.work / "unchunked" / "SYSC" / "zchunked" / "zcl_po_check.clas.abap").read_text(encoding="utf-8")
+        self.assertIn("DEFINITION", src)
+        self.assertIn("IMPLEMENTATION", src)
+        # second run: nothing changed -> packages_unchanged
+        out = run("unchunk.py")
+        self.assertIn("unchanged_packages=1", out)
+        # resolve the leftover segment via a mocked splitter answer
+        unres = json.loads((self.work / "unchunk_unresolved.json").read_text(encoding="utf-8"))["segments"]
+        self.assertEqual(len(unres), 1)
+        (self.work / "unchunk_resolution.json").write_text(json.dumps({"results": [
+            {"segment": unres[0]["id"], "type": "PROG", "name": "ZFRAGMENT"}]}), encoding="utf-8")
+        out = run("unchunk.py", "--apply-resolution")
+        self.assertIn("applied=1", out)
+        self.assertTrue((self.work / "unchunked" / "SYSC" / "zchunked" / "zfragment.prog.abap").exists())
+        self.assertEqual(json.loads((self.work / "unchunk_unresolved.json").read_text(encoding="utf-8"))["segments"], [])
+
     def test_01_inventory(self):
+        run("unchunk.py")
         out = run("inventory.py")
         self.assertIn("INVENTORY_OK", out)
         inv = {r["key"]: r for r in self.load_jsonl(self.work / "inventory.jsonl")}
+        self.assertIn("SYSC|PROG|ZHR_TS_REPORT", inv)
+        self.assertEqual(inv["SYSC|PROG|ZHR_TS_REPORT"]["source_hash"], inv["SYSA|PROG|ZHR_TS_REPORT"]["source_hash"])
+        self.assertEqual([c["name"] for c in inv["SYSC|FUGR|ZWF_HR"]["children"]], ["Z_WF_HR_START"])
+        inv = {k: v for k, v in inv.items() if not k.startswith("SYSC|")}
         self.assertIn("SYSA|PROG|ZHR_TS_REPORT", inv)
         self.assertEqual(inv["SYSA|PROG|ZHR_TS_REPORT"]["description"], "Timesheet hours per employee")
         self.assertEqual(inv["SYSA|PROG|ZHR_TS_REPORT"]["extra"]["ldb"], "PNP")
@@ -55,6 +89,7 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(len(inv), 11)
 
     def test_02_evidence(self):
+        run("unchunk.py")
         run("inventory.py")
         out = run("evidence.py")
         self.assertIn("EVIDENCE_OK", out)
@@ -78,6 +113,7 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(ev["SYSA|CLAS|ZCL_DOC_HELPER"]["decision"], "needs_llm", ev["SYSA|CLAS|ZCL_DOC_HELPER"]["top"])
 
     def test_03_batches_merge_overlaps_render(self):
+        run("unchunk.py")
         run("inventory.py")
         run("evidence.py")
         out = run("prep_batches.py")
@@ -100,7 +136,7 @@ class PipelineTest(unittest.TestCase):
         self.assertIn("llm_invalid=1", out)
         cls = json.loads((self.work / "classification.json").read_text(encoding="utf-8"))
         by = {o["key"]: o for o in cls["objects"]}
-        self.assertEqual(len(by), 11)
+        self.assertEqual(len([k for k in by if not k.startswith("SYSC|")]), 11)
         self.assertEqual(by["SYSA|PROG|ZHR_TS_REPORT"]["source"], "heuristic")
         self.assertEqual(by[keys[0]]["source"], "llm")
         self.assertNotIn("missing", {o["source"] for o in cls["objects"] if o["key"] in keys})
@@ -110,6 +146,7 @@ class PipelineTest(unittest.TestCase):
         same = {e["name"]: e for e in ov["same_name"]}
         self.assertEqual(same["ZCL_PO_CHECK"]["status"], "diverged")
         self.assertEqual(same["ZCL_UTIL_STRING"]["status"], "identical")
+        self.assertEqual(same["ZHR_TS_REPORT"]["status"], "identical", same["ZHR_TS_REPORT"])  # SYSA vs rebuilt SYSC
         self.assertTrue(any({s["a"], s["b"]} == {"SYSA|PROG|ZHR_TS_REPORT", "SYSB|PROG|ZHR_TS_REPORT_B"} for s in ov["similar"]), ov["similar"])
         run("review_candidates.py")
         self.assertTrue((self.work / "review_candidates.json").exists())
