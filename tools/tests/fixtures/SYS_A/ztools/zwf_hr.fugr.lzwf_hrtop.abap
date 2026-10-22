@@ -1,0 +1,2 @@
+FUNCTION-POOL zwf_hr MESSAGE-ID zwf.
+TABLES: pa0001.

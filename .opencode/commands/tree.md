@@ -1,0 +1,10 @@
+---
+description: Stage 4b - Markdown tree (output/tree.md), flat CSV for Excel (output/objects.csv) and a copy of classification.json in output/.
+agent: sap-migration
+model: openai/gpt-5.6-luna
+---
+Render the tree and CSV. Output:
+!`py tools/render_tree.py --config migration.config.json`
+
+Tell the user the three file paths and what each is for (tree.md to read, objects.csv to filter in Excel,
+classification.json for other tools). If classification.json is missing, point them to `/classify`.

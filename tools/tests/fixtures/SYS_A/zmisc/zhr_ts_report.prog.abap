@@ -1,0 +1,25 @@
+*&---------------------------------------------------------------------*
+*& Report ZHR_TS_REPORT
+*& Weekly timesheet hours per employee for the HR time administrators
+*&---------------------------------------------------------------------*
+REPORT zhr_ts_report MESSAGE-ID zhr.
+TABLES: pernr.
+INFOTYPES: 0001, 0002.
+DATA: lt_cats TYPE TABLE OF catsdb,
+      ls_log  TYPE zhrts_log,
+      lo_util TYPE REF TO zcl_util_string.
+SELECT-OPTIONS: s_date FOR sy-datum.
+GET pernr.
+  rp_provide_from_last p0001 space pn-begda pn-endda.
+  SELECT * FROM catsdb INTO TABLE lt_cats
+    WHERE pernr = pernr-pernr AND workdate IN s_date AND status = '30'.
+  LOOP AT lt_cats INTO DATA(ls_cats).
+    ls_log-pernr = ls_cats-pernr.
+    ls_log-hours = ls_cats-catshours.
+    ls_log-text  = zcl_util_string=>pad_left( iv_text = ls_cats-rproj iv_len = 24 ).
+    MODIFY zhrts_log FROM ls_log.
+  ENDLOOP.
+  CALL FUNCTION 'CATS_READ_RECORDS'
+    EXPORTING pernr = pernr-pernr.
+END-OF-SELECTION.
+  AUTHORITY-CHECK OBJECT 'P_ORGIN' ID 'INFTY' FIELD '0001'.

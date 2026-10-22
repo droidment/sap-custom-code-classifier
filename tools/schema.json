@@ -1,0 +1,29 @@
+{
+  "$comment": "Contract for one classification record produced by the LLM classifier (work/llm/*.json) and by the review patch (work/review_patch.json). tools/merge.py validates against this. Module/submodule/area must be ids from tools/taxonomy.json.",
+  "type": "object",
+  "required": ["key", "module", "confidence", "purpose"],
+  "properties": {
+    "key": { "type": "string", "description": "SYSTEM|TYPE|NAME exactly as given in the batch file" },
+    "module": { "type": "string", "description": "top-level taxonomy id, e.g. HCM, MM, FI, BC, UNKNOWN" },
+    "submodule": { "type": ["string", "null"], "description": "child of module, e.g. HCM-PT; null if undecidable" },
+    "area": { "type": ["string", "null"], "description": "child of submodule, e.g. HCM-PT-TS; null if undecidable" },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "purpose": { "type": "string", "description": "one line, business language: what this object does" },
+    "rationale": { "type": "string", "description": "the evidence that decided it (tables, FMs, BAdIs, callers)" },
+    "flags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "optional: cross-module, utility, obsolete-candidate, test-code, mixed-fugr, needs-human, mislabeled-package"
+    }
+  },
+  "batch_result_file": {
+    "$comment": "Shape of work/llm/NNN.json written by the classifier agent",
+    "type": "object",
+    "required": ["batch_id", "results"],
+    "properties": {
+      "batch_id": { "type": "string" },
+      "model": { "type": "string" },
+      "results": { "type": "array", "items": { "$ref": "#" } }
+    }
+  }
+}

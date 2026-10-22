@@ -1,0 +1,10 @@
+{
+  "systems": [
+    { "id": "SYSA", "company": "Fixture Company A", "root": "SYS_A" },
+    { "id": "SYSB", "company": "Fixture Company B", "root": "SYS_B" }
+  ],
+  "work_dir": "../_tmp/work",
+  "output_dir": "../_tmp/output",
+  "taxonomy": "../../taxonomy",
+  "classification": { "auto_min_score": 6.0, "auto_min_margin": 3.0, "batch_size": 5 }
+}

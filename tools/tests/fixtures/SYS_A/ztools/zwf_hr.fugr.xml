@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_FUGR" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values><AREAT>HR workflow starters</AREAT><INCLUDES><SOBJ_NAME>LZWF_HRTOP</SOBJ_NAME><SOBJ_NAME>SAPLZWF_HR</SOBJ_NAME></INCLUDES><FUNCTIONS><item><FUNCNAME>Z_WF_HR_START</FUNCNAME><SHORT_TEXT>Start HR approval workflow</SHORT_TEXT></item></FUNCTIONS></asx:values>
+ </asx:abap>
+</abapGit>

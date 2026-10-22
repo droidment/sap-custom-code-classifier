@@ -1,0 +1,94 @@
+"""Stage 4b: Markdown tree + flat CSV + a copy of classification.json.
+
+Reads  work/classification.json, work/overlaps.json
+Writes output/tree.md, output/objects.csv, output/classification.json
+
+Usage:  py tools/render_tree.py --config migration.config.json
+"""
+from __future__ import annotations
+
+import csv
+import shutil
+import sys
+from collections import defaultdict
+from pathlib import Path
+from typing import Dict, List, Optional
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from common import base_argparser, load_config, load_taxonomy, log, read_json, short  # noqa: E402
+
+CSV_COLUMNS = ["system", "company", "package", "package_desc", "type", "name", "description", "module", "module_name",
+               "submodule", "submodule_name", "area", "area_name", "confidence", "source", "purpose", "flags",
+               "overlap_status", "overlap_systems", "loc", "function_modules", "files"]
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    ap = base_argparser(__doc__)
+    args = ap.parse_args(argv)
+    cfg = load_config(args.config)
+    tax = load_taxonomy(cfg.taxonomy_path)
+    cls = read_json(cfg.classification_file)
+    objs = cls["objects"]
+    ov_index = read_json(cfg.overlaps_file).get("index", {}) if cfg.overlaps_file.exists() else {}
+    cfg.output_dir.mkdir(parents=True, exist_ok=True)
+
+    # ---- tree.md -------------------------------------------------------------------
+    tree: Dict[str, Dict[str, Dict[str, List[dict]]]] = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    for o in objs:
+        tree[o["module"]][o.get("submodule") or "_"][o.get("area") or "_"].append(o)
+
+    lines = [f"# Custom code by SAP module", "", f"Generated {cls['generated']}. Systems: " +
+             ", ".join(f"{s['id']} ({s['company']})" for s in cls["systems"]), "",
+             f"Objects: {len(objs)}", ""]
+    for module in sorted(tree, key=lambda m: (m == "UNKNOWN", m)):
+        subs = tree[module]
+        n_mod = sum(len(v) for s in subs.values() for v in s.values())
+        lines.append(f"## {module} - {tax.name(module)}  ({n_mod})")
+        for sub in sorted(subs, key=lambda s: (s == "_", s)):
+            areas = subs[sub]
+            n_sub = sum(len(v) for v in areas.values())
+            indent = ""
+            if sub != "_":
+                lines.append(f"- **{sub} - {tax.name(sub)}** ({n_sub})")
+                indent = "  "
+            for area in sorted(areas, key=lambda a: (a == "_", a)):
+                items = sorted(areas[area], key=lambda o: (o["type"], o["name"], o["system"]))
+                a_indent = indent
+                if area != "_":
+                    lines.append(f"{indent}- *{area} - {tax.name(area)}* ({len(items)})")
+                    a_indent = indent + "  "
+                for o in items:
+                    ov = ov_index.get(o["key"], {})
+                    tag = f" [{ov['status']}: {','.join(ov.get('systems', []))}]" if ov.get("status") in ("identical", "diverged") else ""
+                    fms = f" (FMs: {len(o['children'])})" if o.get("children") else ""
+                    lines.append(f"{a_indent}- `{o['type']} {o['name']}` - {short(o.get('purpose') or o.get('description'), 90)} "
+                                 f"| {o['system']} / {o['package']} | conf {o['confidence']:.2f}{fms}{tag}")
+        lines.append("")
+    (cfg.output_dir / "tree.md").write_text("\n".join(lines), encoding="utf-8")
+
+    # ---- objects.csv ---------------------------------------------------------------
+    with (cfg.output_dir / "objects.csv").open("w", newline="", encoding="utf-8-sig") as fh:
+        w = csv.DictWriter(fh, fieldnames=CSV_COLUMNS)
+        w.writeheader()
+        for o in sorted(objs, key=lambda o: (o["module"], o.get("submodule") or "", o.get("area") or "", o["type"], o["name"], o["system"])):
+            ov = ov_index.get(o["key"], {})
+            w.writerow({
+                "system": o["system"], "company": o.get("company", ""), "package": o["package"], "package_desc": o.get("package_desc", ""),
+                "type": o["type"], "name": o["name"], "description": o.get("description", ""),
+                "module": o["module"], "module_name": tax.name(o["module"]),
+                "submodule": o.get("submodule") or "", "submodule_name": tax.name(o["submodule"]) if o.get("submodule") else "",
+                "area": o.get("area") or "", "area_name": tax.name(o["area"]) if o.get("area") else "",
+                "confidence": o["confidence"], "source": o["source"], "purpose": o.get("purpose", ""),
+                "flags": ";".join(o.get("flags", [])),
+                "overlap_status": ov.get("status", ""), "overlap_systems": ";".join(ov.get("systems", [])),
+                "loc": o.get("loc", 0), "function_modules": ";".join(c["name"] for c in o.get("children", [])),
+                "files": ";".join(o.get("files", [])),
+            })
+    shutil.copyfile(cfg.classification_file, cfg.output_dir / "classification.json")
+    log(f"tree: {cfg.output_dir / 'tree.md'}, csv: {cfg.output_dir / 'objects.csv'}")
+    print(f"TREE_OK objects={len(objs)} tree={cfg.output_dir / 'tree.md'} csv={cfg.output_dir / 'objects.csv'}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

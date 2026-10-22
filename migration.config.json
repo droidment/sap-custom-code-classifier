@@ -1,0 +1,31 @@
+{
+  "_comment": "Edit 'systems' to point at the abapGit export root of each company system. Paths may be absolute or relative to this file.",
+  "systems": [
+    { "id": "SYSA", "company": "Company A", "root": "C:/exports/SYSA/src" },
+    { "id": "SYSB", "company": "Company B", "root": "C:/exports/SYSB/src" },
+    { "id": "SYSC", "company": "Company C", "root": "C:/exports/SYSC/src" }
+  ],
+  "work_dir": "work",
+  "output_dir": "output",
+  "taxonomy": "tools/taxonomy",
+  "classification": {
+    "auto_min_score": 6.0,
+    "auto_min_margin": 3.0,
+    "sub_level_share": 0.3,
+    "batch_size": 20,
+    "batches_per_run": 10,
+    "excerpt_max_lines": 140,
+    "excerpt_max_chars": 7000,
+    "propagation_passes": 2,
+    "propagation_cap": 4.0,
+    "propagation_factor_users": 1.0,
+    "propagation_factor_uses": 0.6
+  },
+  "review": {
+    "low_confidence": 0.6
+  },
+  "overlaps": {
+    "similar_name_threshold": 0.82,
+    "min_shared_tables": 2
+  }
+}
