@@ -36,6 +36,20 @@ dependency graph (Z-tables and helpers inherit from their callers) and decides `
   `work/llm/<batch>.json` to force a redo).
 - Later result files override earlier ones for the same key (by file time); review patches override all.
 
+## Fields aligned with a later analysis database
+Every object in `work/classification.json` also carries:
+- `secondary`: further assignments `[{module, submodule, area, role: supporting|context, rationale}]`; the
+  primary assignment is implicitly role `direct`. Set by the classifier or the reviewer.
+- `outcome` (triage status, derived by merge): `classified`, `needs_context` (UNKNOWN or needs-human),
+  `shared_technical` (BC/CA with flag utility or cross-module), `extraction_failed` (inventory found no
+  source and no xml), `pending` (no result yet).
+- `review_state`: `proposed` (default), `reviewed` or `rejected`, plus `reviewed_by`; only the review patch
+  sets these. Confidence is a model estimate; review_state is a decision. They are separate on purpose.
+- `provenance`: `{source, model, batch, prompt_version, taxonomy_version, generated}`. Bump
+  `PROMPT_VERSION` in `tools/merge.py` and `prompt_version` in the classifier agent when the prompt changes;
+  `taxonomy_version` comes from `tools/taxonomy/nodes.json`.
+All of them appear as CSV columns and in the explorer (outcome and review-state filters).
+
 ## Re-running and tuning
 - `/classify --limit 1`: smoke test on one batch.  `/classify --min-confidence 0.6`: re-batch weak objects
   (batch ids `R001...`).  `/classify --only-module UNKNOWN`: only the undecided.

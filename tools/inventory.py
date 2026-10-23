@@ -217,6 +217,8 @@ def walk_system(system: dict, root: Path) -> Tuple[List[dict], Counter]:
                         rec["fm_sources"][sub] = relfile
         rec["loc"] = loc
         rec["header_comments"] = headers
+        # extraction_failed = nothing usable was exported for this object (no source and no xml)
+        rec["extraction_status"] = "ok" if (rec["source_files"] or rec["xml_file"]) else "failed"
         rec["source_hash"] = source_hash("\n".join(normalized_parts)) if normalized_parts else None
         if rec["type"] == "FUGR" and not rec["children"]:
             warnings["fugr_without_function_list"] += 1

@@ -293,8 +293,16 @@ batches_total= batches_written= batches_done= batch_dir= llm_dir=`.
 `REMAINING_AFTER_THIS_RUN n`.
 
 ### 8.3 LLM contract (`tools/schema.json`) and `tools/merge.py`
-Classifier writes `work/llm/<batch_id>.json`: `{"batch_id","model","results":[{"key","module",
-"submodule"|null,"area"|null,"confidence" 0..1,"purpose","rationale","flags":[]}]}`. Allowed flags:
+Classifier writes `work/llm/<batch_id>.json`: `{"batch_id","model","prompt_version","results":[{"key","module",
+"submodule"|null,"area"|null,"confidence" 0..1,"purpose","rationale","flags":[],
+"secondary":[{"module","submodule","area","role": "supporting"|"context","rationale"}]}]}` (secondary optional,
+max 5 kept, invalid entries dropped and reported). The review patch may additionally set `review_state`
+("reviewed"|"rejected") and `reviewed_by`; merge defaults review records to reviewed / abap-reviewer and keeps
+the underlying LLM provenance. merge adds to every object: `outcome` (classified | needs_context for UNKNOWN or
+flag needs-human | shared_technical for BC/CA with flag utility or cross-module | extraction_failed when the
+inventory found no source and no xml | pending when no result), `review_state` (default proposed),
+`reviewed_by`, `provenance {source, model, batch, prompt_version, taxonomy_version (from nodes.json "version"),
+generated}`. These appear as CSV columns and explorer filters (outcome, review state) and detail rows. Allowed flags:
 cross-module, utility, obsolete-candidate, test-code, mixed-fugr, needs-human, mislabeled-package,
 interface, report-only, generated, copy-of-standard, dead-code.
 merge: load auto.json, then every llm file sorted by mtime (later wins per key), then with

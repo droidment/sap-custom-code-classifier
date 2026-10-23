@@ -19,6 +19,7 @@ from common import base_argparser, load_config, load_taxonomy, log, read_json, s
 
 CSV_COLUMNS = ["system", "company", "package", "package_desc", "type", "name", "description", "module", "module_name",
                "submodule", "submodule_name", "area", "area_name", "confidence", "source", "purpose", "flags",
+               "secondary", "outcome", "review_state", "reviewed_by", "model", "prompt_version", "taxonomy_version",
                "overlap_status", "overlap_systems", "loc", "function_modules", "files"]
 
 
@@ -80,6 +81,10 @@ def main(argv: Optional[List[str]] = None) -> int:
                 "area": o.get("area") or "", "area_name": tax.name(o["area"]) if o.get("area") else "",
                 "confidence": o["confidence"], "source": o["source"], "purpose": o.get("purpose", ""),
                 "flags": ";".join(o.get("flags", [])),
+                "secondary": ";".join(f"{s.get('area') or s.get('submodule') or s['module']}({s['role']})" for s in o.get("secondary", [])),
+                "outcome": o.get("outcome", ""), "review_state": o.get("review_state", ""), "reviewed_by": o.get("reviewed_by", ""),
+                "model": (o.get("provenance") or {}).get("model", ""), "prompt_version": (o.get("provenance") or {}).get("prompt_version", ""),
+                "taxonomy_version": (o.get("provenance") or {}).get("taxonomy_version", ""),
                 "overlap_status": ov.get("status", ""), "overlap_systems": ";".join(ov.get("systems", [])),
                 "loc": o.get("loc", 0), "function_modules": ";".join(c["name"] for c in o.get("children", [])),
                 "files": ";".join(o.get("files", [])),

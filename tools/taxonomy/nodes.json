@@ -1,133 +1,527 @@
 {
-  "_comment": "SAP module taxonomy for ECC 6.0 custom code. ids follow SAP application-component style. Level 0 = module, level 1 = submodule, level 2 = area. Rules live in rules_*.json next to this file; add rules_custom.json for your own Z-tables, naming conventions and keywords. Weights are per signal kind; a rule may carry its own 'weight' multiplier.",
-  "weights": {
-    "table": 5, "table_prefix": 4, "type_ref": 2.5,
-    "function": 5, "function_prefix": 3,
-    "class": 5, "class_prefix": 3,
-    "include": 4, "include_prefix": 3,
-    "ldb": 6, "infotype": 5, "infotype_range": 4,
-    "badi": 6, "badi_prefix": 4,
-    "tcode": 3, "tcode_prefix": 2,
-    "msgclass": 3, "msgclass_prefix": 2,
-    "authobj": 4, "authobj_prefix": 3,
-    "keyword": 1.5, "name_prefix": 1.5, "package_keyword": 1, "object_type": 1.5
+ "_comment": "SAP module taxonomy for ECC 6.0 custom code. ids follow SAP application-component style. Level 0 = module, level 1 = submodule, level 2 = area. Rules live in rules_*.json next to this file; add rules_custom.json for your own Z-tables, naming conventions and keywords. Weights are per signal kind; a rule may carry its own 'weight' multiplier.",
+ "version": "2026-10-22",
+ "weights": {
+  "table": 5,
+  "table_prefix": 4,
+  "type_ref": 2.5,
+  "function": 5,
+  "function_prefix": 3,
+  "class": 5,
+  "class_prefix": 3,
+  "include": 4,
+  "include_prefix": 3,
+  "ldb": 6,
+  "infotype": 5,
+  "infotype_range": 4,
+  "badi": 6,
+  "badi_prefix": 4,
+  "tcode": 3,
+  "tcode_prefix": 2,
+  "msgclass": 3,
+  "msgclass_prefix": 2,
+  "authobj": 4,
+  "authobj_prefix": 3,
+  "keyword": 1.5,
+  "name_prefix": 1.5,
+  "package_keyword": 1,
+  "object_type": 1.5
+ },
+ "nodes": [
+  {
+   "id": "HCM",
+   "name": "Human Capital Management (HR)"
   },
-  "nodes": [
-    { "id": "HCM", "name": "Human Capital Management (HR)" },
-    { "id": "HCM-PA", "name": "Personnel Administration", "parent": "HCM" },
-    { "id": "HCM-PT", "name": "Time Management", "parent": "HCM" },
-    { "id": "HCM-PT-TS", "name": "Time Sheet (CATS)", "parent": "HCM-PT" },
-    { "id": "HCM-PT-EV", "name": "Time Evaluation / Schemas", "parent": "HCM-PT" },
-    { "id": "HCM-PT-ABS", "name": "Absences, Attendances, Quotas", "parent": "HCM-PT" },
-    { "id": "HCM-PY", "name": "Payroll", "parent": "HCM" },
-    { "id": "HCM-PY-POST", "name": "Payroll Posting to FI/CO", "parent": "HCM-PY" },
-    { "id": "HCM-OM", "name": "Organizational Management", "parent": "HCM" },
-    { "id": "HCM-PD", "name": "Personnel Development (Qualifications, Appraisals)", "parent": "HCM" },
-    { "id": "HCM-PE", "name": "Training & Event Management", "parent": "HCM" },
-    { "id": "HCM-BN", "name": "Benefits", "parent": "HCM" },
-    { "id": "HCM-RC", "name": "Recruitment", "parent": "HCM" },
-    { "id": "HCM-CM", "name": "Compensation Management", "parent": "HCM" },
-    { "id": "HCM-ESS", "name": "ESS / MSS Self-Services", "parent": "HCM" },
-    { "id": "HCM-WF", "name": "HR Workflows & Approvals", "parent": "HCM" },
-    { "id": "HCM-WF-LEAVE", "name": "Leave / Time Requests", "parent": "HCM-WF" },
-
-    { "id": "FI", "name": "Financial Accounting" },
-    { "id": "FI-GL", "name": "General Ledger", "parent": "FI" },
-    { "id": "FI-AP", "name": "Accounts Payable", "parent": "FI" },
-    { "id": "FI-AP-PAY", "name": "Payment Run / Payment Media", "parent": "FI-AP" },
-    { "id": "FI-AR", "name": "Accounts Receivable", "parent": "FI" },
-    { "id": "FI-AR-DUN", "name": "Dunning", "parent": "FI-AR" },
-    { "id": "FI-AA", "name": "Asset Accounting", "parent": "FI" },
-    { "id": "FI-BL", "name": "Bank Accounting / Statements", "parent": "FI" },
-    { "id": "FI-TV", "name": "Travel Management", "parent": "FI" },
-    { "id": "FI-SL", "name": "Special Purpose Ledger", "parent": "FI" },
-    { "id": "FI-TX", "name": "Taxes / Withholding Tax", "parent": "FI" },
-    { "id": "FI-CLS", "name": "Closing & Reporting", "parent": "FI" },
-
-    { "id": "CO", "name": "Controlling" },
-    { "id": "CO-OM", "name": "Overhead Management (Cost Centers, Internal Orders)", "parent": "CO" },
-    { "id": "CO-PC", "name": "Product Costing / Material Ledger", "parent": "CO" },
-    { "id": "CO-PA", "name": "Profitability Analysis", "parent": "CO" },
-    { "id": "CO-PCA", "name": "Profit Center Accounting", "parent": "CO" },
-
-    { "id": "MM", "name": "Materials Management" },
-    { "id": "MM-PUR", "name": "Purchasing", "parent": "MM" },
-    { "id": "MM-PUR-PO", "name": "Purchase Orders", "parent": "MM-PUR" },
-    { "id": "MM-PUR-PR", "name": "Purchase Requisitions & Release", "parent": "MM-PUR" },
-    { "id": "MM-PUR-CON", "name": "Contracts, Agreements, Source Lists", "parent": "MM-PUR" },
-    { "id": "MM-IM", "name": "Inventory Management", "parent": "MM" },
-    { "id": "MM-IM-PI", "name": "Physical Inventory", "parent": "MM-IM" },
-    { "id": "MM-IV", "name": "Logistics Invoice Verification", "parent": "MM" },
-    { "id": "MM-SRV", "name": "External Services", "parent": "MM" },
-    { "id": "MM-MD", "name": "Vendor & Purchasing Master Data", "parent": "MM" },
-
-    { "id": "LO", "name": "Logistics General (Master Data)" },
-    { "id": "LO-MD", "name": "Material Master", "parent": "LO" },
-    { "id": "LO-BM", "name": "Batch Management", "parent": "LO" },
-    { "id": "LO-VC", "name": "Variant Configuration", "parent": "LO" },
-    { "id": "LO-HU", "name": "Handling Units", "parent": "LO" },
-
-    { "id": "SD", "name": "Sales & Distribution" },
-    { "id": "SD-SLS", "name": "Sales Orders / Quotations / Contracts", "parent": "SD" },
-    { "id": "SD-BIL", "name": "Billing", "parent": "SD" },
-    { "id": "SD-BF", "name": "Basic Functions (Pricing, Output, Partners, Texts)", "parent": "SD" },
-    { "id": "SD-BF-PR", "name": "Pricing & Conditions", "parent": "SD-BF" },
-    { "id": "SD-BF-OUT", "name": "Output Determination (NAST)", "parent": "SD-BF" },
-    { "id": "SD-MD", "name": "Customer Master (Sales Views)", "parent": "SD" },
-    { "id": "SD-EDI", "name": "Sales EDI / Order Intake", "parent": "SD" },
-
-    { "id": "LE", "name": "Logistics Execution" },
-    { "id": "LE-SHP", "name": "Shipping / Deliveries", "parent": "LE" },
-    { "id": "LE-WM", "name": "Warehouse Management", "parent": "LE" },
-    { "id": "LE-TRA", "name": "Transportation", "parent": "LE" },
-
-    { "id": "PP", "name": "Production Planning" },
-    { "id": "PP-SFC", "name": "Production Orders / Shop Floor", "parent": "PP" },
-    { "id": "PP-MRP", "name": "MRP / Planned Orders", "parent": "PP" },
-    { "id": "PP-BD", "name": "Master Data (BOM, Routing, Work Center)", "parent": "PP" },
-    { "id": "PP-PI", "name": "Process Orders (PP-PI)", "parent": "PP" },
-    { "id": "PP-REM", "name": "Repetitive Manufacturing", "parent": "PP" },
-
-    { "id": "PM", "name": "Plant Maintenance" },
-    { "id": "PM-EQM", "name": "Technical Objects (Equipment, Functional Locations)", "parent": "PM" },
-    { "id": "PM-WOC", "name": "Maintenance Orders & Notifications", "parent": "PM" },
-    { "id": "PM-PRM", "name": "Preventive Maintenance / Plans", "parent": "PM" },
-
-    { "id": "QM", "name": "Quality Management" },
-    { "id": "QM-IM", "name": "Inspection Lots / Results / Usage Decision", "parent": "QM" },
-    { "id": "QM-QN", "name": "Quality Notifications", "parent": "QM" },
-    { "id": "QM-PT", "name": "Inspection Planning", "parent": "QM" },
-
-    { "id": "PS", "name": "Project System" },
-    { "id": "PS-STR", "name": "Project Structures (WBS, Networks)", "parent": "PS" },
-    { "id": "PS-COS", "name": "Project Costs & Settlement", "parent": "PS" },
-
-    { "id": "FSCM", "name": "Financial Supply Chain Management" },
-    { "id": "FSCM-CR", "name": "Credit Management", "parent": "FSCM" },
-    { "id": "FSCM-COL", "name": "Collections & Dispute Management", "parent": "FSCM" },
-
-    { "id": "BC", "name": "Basis / Technical / Cross-Application Technology" },
-    { "id": "BC-WF", "name": "Business Workflow (technical)", "parent": "BC" },
-    { "id": "BC-ALE", "name": "ALE / IDoc / EDI", "parent": "BC" },
-    { "id": "BC-ESI", "name": "Interfaces: RFC, Web Services, Proxies, OData/Gateway, Fiori", "parent": "BC" },
-    { "id": "BC-SEC", "name": "Authorizations, Users, Roles", "parent": "BC" },
-    { "id": "BC-SRV", "name": "Output: Forms, Email, Print, Spool, Archiving, File I/O", "parent": "BC" },
-    { "id": "BC-SRV-FORM", "name": "SmartForms / Adobe Forms / SAPscript", "parent": "BC-SRV" },
-    { "id": "BC-SRV-MAIL", "name": "Email / Business Communication", "parent": "BC-SRV" },
-    { "id": "BC-SRV-FILE", "name": "File Upload/Download, Excel", "parent": "BC-SRV" },
-    { "id": "BC-ABA", "name": "ABAP Utilities, Frameworks, Reusable Helpers", "parent": "BC" },
-    { "id": "BC-ABA-JOB", "name": "Background Jobs / Scheduling", "parent": "BC-ABA" },
-    { "id": "BC-CTS", "name": "Transport, Development Tools, System Admin", "parent": "BC" },
-    { "id": "BC-BW", "name": "BW Extractors / DataSources", "parent": "BC" },
-    { "id": "BC-UI", "name": "UI Frameworks (ALV, Dynpro, Web Dynpro) without business context", "parent": "BC" },
-
-    { "id": "CA", "name": "Cross-Application Business Functions" },
-    { "id": "CA-BP", "name": "Business Partner", "parent": "CA" },
-    { "id": "CA-ADR", "name": "Central Address Management", "parent": "CA" },
-    { "id": "CA-DMS", "name": "Document Management (DMS)", "parent": "CA" },
-    { "id": "CA-CL", "name": "Classification System", "parent": "CA" },
-    { "id": "CA-GEN", "name": "Generic: Change Docs, Number Ranges, Texts, Units, Currencies", "parent": "CA" },
-
-    { "id": "UNKNOWN", "name": "Unclassified / Insufficient evidence" }
-  ]
+  {
+   "id": "HCM-PA",
+   "name": "Personnel Administration",
+   "parent": "HCM"
+  },
+  {
+   "id": "HCM-PT",
+   "name": "Time Management",
+   "parent": "HCM"
+  },
+  {
+   "id": "HCM-PT-TS",
+   "name": "Time Sheet (CATS)",
+   "parent": "HCM-PT"
+  },
+  {
+   "id": "HCM-PT-EV",
+   "name": "Time Evaluation / Schemas",
+   "parent": "HCM-PT"
+  },
+  {
+   "id": "HCM-PT-ABS",
+   "name": "Absences, Attendances, Quotas",
+   "parent": "HCM-PT"
+  },
+  {
+   "id": "HCM-PY",
+   "name": "Payroll",
+   "parent": "HCM"
+  },
+  {
+   "id": "HCM-PY-POST",
+   "name": "Payroll Posting to FI/CO",
+   "parent": "HCM-PY"
+  },
+  {
+   "id": "HCM-OM",
+   "name": "Organizational Management",
+   "parent": "HCM"
+  },
+  {
+   "id": "HCM-PD",
+   "name": "Personnel Development (Qualifications, Appraisals)",
+   "parent": "HCM"
+  },
+  {
+   "id": "HCM-PE",
+   "name": "Training & Event Management",
+   "parent": "HCM"
+  },
+  {
+   "id": "HCM-BN",
+   "name": "Benefits",
+   "parent": "HCM"
+  },
+  {
+   "id": "HCM-RC",
+   "name": "Recruitment",
+   "parent": "HCM"
+  },
+  {
+   "id": "HCM-CM",
+   "name": "Compensation Management",
+   "parent": "HCM"
+  },
+  {
+   "id": "HCM-ESS",
+   "name": "ESS / MSS Self-Services",
+   "parent": "HCM"
+  },
+  {
+   "id": "HCM-WF",
+   "name": "HR Workflows & Approvals",
+   "parent": "HCM"
+  },
+  {
+   "id": "HCM-WF-LEAVE",
+   "name": "Leave / Time Requests",
+   "parent": "HCM-WF"
+  },
+  {
+   "id": "FI",
+   "name": "Financial Accounting"
+  },
+  {
+   "id": "FI-GL",
+   "name": "General Ledger",
+   "parent": "FI"
+  },
+  {
+   "id": "FI-AP",
+   "name": "Accounts Payable",
+   "parent": "FI"
+  },
+  {
+   "id": "FI-AP-PAY",
+   "name": "Payment Run / Payment Media",
+   "parent": "FI-AP"
+  },
+  {
+   "id": "FI-AR",
+   "name": "Accounts Receivable",
+   "parent": "FI"
+  },
+  {
+   "id": "FI-AR-DUN",
+   "name": "Dunning",
+   "parent": "FI-AR"
+  },
+  {
+   "id": "FI-AA",
+   "name": "Asset Accounting",
+   "parent": "FI"
+  },
+  {
+   "id": "FI-BL",
+   "name": "Bank Accounting / Statements",
+   "parent": "FI"
+  },
+  {
+   "id": "FI-TV",
+   "name": "Travel Management",
+   "parent": "FI"
+  },
+  {
+   "id": "FI-SL",
+   "name": "Special Purpose Ledger",
+   "parent": "FI"
+  },
+  {
+   "id": "FI-TX",
+   "name": "Taxes / Withholding Tax",
+   "parent": "FI"
+  },
+  {
+   "id": "FI-CLS",
+   "name": "Closing & Reporting",
+   "parent": "FI"
+  },
+  {
+   "id": "CO",
+   "name": "Controlling"
+  },
+  {
+   "id": "CO-OM",
+   "name": "Overhead Management (Cost Centers, Internal Orders)",
+   "parent": "CO"
+  },
+  {
+   "id": "CO-PC",
+   "name": "Product Costing / Material Ledger",
+   "parent": "CO"
+  },
+  {
+   "id": "CO-PA",
+   "name": "Profitability Analysis",
+   "parent": "CO"
+  },
+  {
+   "id": "CO-PCA",
+   "name": "Profit Center Accounting",
+   "parent": "CO"
+  },
+  {
+   "id": "MM",
+   "name": "Materials Management"
+  },
+  {
+   "id": "MM-PUR",
+   "name": "Purchasing",
+   "parent": "MM"
+  },
+  {
+   "id": "MM-PUR-PO",
+   "name": "Purchase Orders",
+   "parent": "MM-PUR"
+  },
+  {
+   "id": "MM-PUR-PR",
+   "name": "Purchase Requisitions & Release",
+   "parent": "MM-PUR"
+  },
+  {
+   "id": "MM-PUR-CON",
+   "name": "Contracts, Agreements, Source Lists",
+   "parent": "MM-PUR"
+  },
+  {
+   "id": "MM-IM",
+   "name": "Inventory Management",
+   "parent": "MM"
+  },
+  {
+   "id": "MM-IM-PI",
+   "name": "Physical Inventory",
+   "parent": "MM-IM"
+  },
+  {
+   "id": "MM-IV",
+   "name": "Logistics Invoice Verification",
+   "parent": "MM"
+  },
+  {
+   "id": "MM-SRV",
+   "name": "External Services",
+   "parent": "MM"
+  },
+  {
+   "id": "MM-MD",
+   "name": "Vendor & Purchasing Master Data",
+   "parent": "MM"
+  },
+  {
+   "id": "LO",
+   "name": "Logistics General (Master Data)"
+  },
+  {
+   "id": "LO-MD",
+   "name": "Material Master",
+   "parent": "LO"
+  },
+  {
+   "id": "LO-BM",
+   "name": "Batch Management",
+   "parent": "LO"
+  },
+  {
+   "id": "LO-VC",
+   "name": "Variant Configuration",
+   "parent": "LO"
+  },
+  {
+   "id": "LO-HU",
+   "name": "Handling Units",
+   "parent": "LO"
+  },
+  {
+   "id": "SD",
+   "name": "Sales & Distribution"
+  },
+  {
+   "id": "SD-SLS",
+   "name": "Sales Orders / Quotations / Contracts",
+   "parent": "SD"
+  },
+  {
+   "id": "SD-BIL",
+   "name": "Billing",
+   "parent": "SD"
+  },
+  {
+   "id": "SD-BF",
+   "name": "Basic Functions (Pricing, Output, Partners, Texts)",
+   "parent": "SD"
+  },
+  {
+   "id": "SD-BF-PR",
+   "name": "Pricing & Conditions",
+   "parent": "SD-BF"
+  },
+  {
+   "id": "SD-BF-OUT",
+   "name": "Output Determination (NAST)",
+   "parent": "SD-BF"
+  },
+  {
+   "id": "SD-MD",
+   "name": "Customer Master (Sales Views)",
+   "parent": "SD"
+  },
+  {
+   "id": "SD-EDI",
+   "name": "Sales EDI / Order Intake",
+   "parent": "SD"
+  },
+  {
+   "id": "LE",
+   "name": "Logistics Execution"
+  },
+  {
+   "id": "LE-SHP",
+   "name": "Shipping / Deliveries",
+   "parent": "LE"
+  },
+  {
+   "id": "LE-WM",
+   "name": "Warehouse Management",
+   "parent": "LE"
+  },
+  {
+   "id": "LE-TRA",
+   "name": "Transportation",
+   "parent": "LE"
+  },
+  {
+   "id": "PP",
+   "name": "Production Planning"
+  },
+  {
+   "id": "PP-SFC",
+   "name": "Production Orders / Shop Floor",
+   "parent": "PP"
+  },
+  {
+   "id": "PP-MRP",
+   "name": "MRP / Planned Orders",
+   "parent": "PP"
+  },
+  {
+   "id": "PP-BD",
+   "name": "Master Data (BOM, Routing, Work Center)",
+   "parent": "PP"
+  },
+  {
+   "id": "PP-PI",
+   "name": "Process Orders (PP-PI)",
+   "parent": "PP"
+  },
+  {
+   "id": "PP-REM",
+   "name": "Repetitive Manufacturing",
+   "parent": "PP"
+  },
+  {
+   "id": "PM",
+   "name": "Plant Maintenance"
+  },
+  {
+   "id": "PM-EQM",
+   "name": "Technical Objects (Equipment, Functional Locations)",
+   "parent": "PM"
+  },
+  {
+   "id": "PM-WOC",
+   "name": "Maintenance Orders & Notifications",
+   "parent": "PM"
+  },
+  {
+   "id": "PM-PRM",
+   "name": "Preventive Maintenance / Plans",
+   "parent": "PM"
+  },
+  {
+   "id": "QM",
+   "name": "Quality Management"
+  },
+  {
+   "id": "QM-IM",
+   "name": "Inspection Lots / Results / Usage Decision",
+   "parent": "QM"
+  },
+  {
+   "id": "QM-QN",
+   "name": "Quality Notifications",
+   "parent": "QM"
+  },
+  {
+   "id": "QM-PT",
+   "name": "Inspection Planning",
+   "parent": "QM"
+  },
+  {
+   "id": "PS",
+   "name": "Project System"
+  },
+  {
+   "id": "PS-STR",
+   "name": "Project Structures (WBS, Networks)",
+   "parent": "PS"
+  },
+  {
+   "id": "PS-COS",
+   "name": "Project Costs & Settlement",
+   "parent": "PS"
+  },
+  {
+   "id": "FSCM",
+   "name": "Financial Supply Chain Management"
+  },
+  {
+   "id": "FSCM-CR",
+   "name": "Credit Management",
+   "parent": "FSCM"
+  },
+  {
+   "id": "FSCM-COL",
+   "name": "Collections & Dispute Management",
+   "parent": "FSCM"
+  },
+  {
+   "id": "BC",
+   "name": "Basis / Technical / Cross-Application Technology"
+  },
+  {
+   "id": "BC-WF",
+   "name": "Business Workflow (technical)",
+   "parent": "BC"
+  },
+  {
+   "id": "BC-ALE",
+   "name": "ALE / IDoc / EDI",
+   "parent": "BC"
+  },
+  {
+   "id": "BC-ESI",
+   "name": "Interfaces: RFC, Web Services, Proxies, OData/Gateway, Fiori",
+   "parent": "BC"
+  },
+  {
+   "id": "BC-SEC",
+   "name": "Authorizations, Users, Roles",
+   "parent": "BC"
+  },
+  {
+   "id": "BC-SRV",
+   "name": "Output: Forms, Email, Print, Spool, Archiving, File I/O",
+   "parent": "BC"
+  },
+  {
+   "id": "BC-SRV-FORM",
+   "name": "SmartForms / Adobe Forms / SAPscript",
+   "parent": "BC-SRV"
+  },
+  {
+   "id": "BC-SRV-MAIL",
+   "name": "Email / Business Communication",
+   "parent": "BC-SRV"
+  },
+  {
+   "id": "BC-SRV-FILE",
+   "name": "File Upload/Download, Excel",
+   "parent": "BC-SRV"
+  },
+  {
+   "id": "BC-ABA",
+   "name": "ABAP Utilities, Frameworks, Reusable Helpers",
+   "parent": "BC"
+  },
+  {
+   "id": "BC-ABA-JOB",
+   "name": "Background Jobs / Scheduling",
+   "parent": "BC-ABA"
+  },
+  {
+   "id": "BC-CTS",
+   "name": "Transport, Development Tools, System Admin",
+   "parent": "BC"
+  },
+  {
+   "id": "BC-BW",
+   "name": "BW Extractors / DataSources",
+   "parent": "BC"
+  },
+  {
+   "id": "BC-UI",
+   "name": "UI Frameworks (ALV, Dynpro, Web Dynpro) without business context",
+   "parent": "BC"
+  },
+  {
+   "id": "CA",
+   "name": "Cross-Application Business Functions"
+  },
+  {
+   "id": "CA-BP",
+   "name": "Business Partner",
+   "parent": "CA"
+  },
+  {
+   "id": "CA-ADR",
+   "name": "Central Address Management",
+   "parent": "CA"
+  },
+  {
+   "id": "CA-DMS",
+   "name": "Document Management (DMS)",
+   "parent": "CA"
+  },
+  {
+   "id": "CA-CL",
+   "name": "Classification System",
+   "parent": "CA"
+  },
+  {
+   "id": "CA-GEN",
+   "name": "Generic: Change Docs, Number Ranges, Texts, Units, Currencies",
+   "parent": "CA"
+  },
+  {
+   "id": "UNKNOWN",
+   "name": "Unclassified / Insufficient evidence"
+  }
+ ]
 }

@@ -60,15 +60,26 @@ Rules
 - Flags allowed: cross-module, utility, obsolete-candidate, test-code, mixed-fugr, needs-human,
   mislabeled-package, interface, report-only, generated, copy-of-standard, dead-code.
 
+- One primary assignment per object (that is the module whose process the object directly implements,
+  role "direct"). When the object materially serves a second module as well (a sales user exit that also
+  posts to CO, an HR report that feeds FI), add it under `secondary` with role `supporting` (it does work
+  for that module) or `context` (it only reads that module's data). At most 3, only with evidence. Do not
+  use `secondary` to hedge an uncertain primary; lower the confidence instead.
+- A broad supported assignment is preferable to an unsupported leaf: stop at the submodule or module when
+  the evidence does not reach the area.
+
 Output: write EXACTLY one file `work/llm/<batch_id>.json` with this shape and nothing else:
 {
   "batch_id": "<batch_id>",
   "model": "<your model id>",
+  "prompt_version": "classifier-1.1",
   "results": [
     {"key": "<key exactly as in the batch>", "module": "<id>", "submodule": "<id or null>", "area": "<id or null>",
-     "confidence": 0.0-1.0, "purpose": "<one sentence>", "rationale": "<the evidence that decided it>", "flags": []}
+     "confidence": 0.0-1.0, "purpose": "<one sentence>", "rationale": "<the evidence that decided it>", "flags": [],
+     "secondary": [{"module": "<id>", "submodule": "<id or null>", "area": "<id or null>", "role": "supporting|context", "rationale": "<why>"}]}
   ]
 }
+`secondary` may be an empty list. Never set `review_state`; that belongs to the review stage.
 Every object in the batch must appear exactly once. Module/submodule/area must be ids from the batch's
 `taxonomy` list and must form a valid parent chain. Do not write anything else, do not modify other files,
 and finish by stating the batch id and the count of results.

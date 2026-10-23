@@ -24,6 +24,43 @@ from common import Taxonomy, base_argparser, load_config, load_taxonomy, log, re
 
 VALID_FLAGS = {"cross-module", "utility", "obsolete-candidate", "test-code", "mixed-fugr", "needs-human",
                "mislabeled-package", "interface", "report-only", "generated", "copy-of-standard", "dead-code"}
+SECONDARY_ROLES = {"supporting", "context"}          # the primary assignment is always role "direct"
+REVIEW_STATES = {"proposed", "reviewed", "rejected"}
+OUTCOMES = ("classified", "needs_context", "shared_technical", "extraction_failed", "pending")
+PROMPT_VERSION = "classifier-1.1"                    # bump when .opencode/agents/abap-classifier.md changes materially
+
+
+def normalize_secondary(items, tax: Taxonomy, key: str, errors: List[str]) -> List[dict]:
+    """Optional extra assignments: [{module, submodule?, area?, role: supporting|context}]."""
+    out: List[dict] = []
+    for it in items or []:
+        if not isinstance(it, dict):
+            errors.append(f"{key}: secondary entry is not an object")
+            continue
+        deepest = None
+        for cand in (it.get("area"), it.get("submodule"), it.get("module")):
+            if cand and str(cand).upper() in tax.nodes:
+                deepest = str(cand).upper()
+                break
+        role = str(it.get("role", "supporting")).lower()
+        if deepest is None or role not in SECONDARY_ROLES:
+            errors.append(f"{key}: invalid secondary assignment {it}")
+            continue
+        m, s, a = tax.split(deepest)
+        out.append({"module": m, "submodule": s, "area": a, "role": role, "rationale": (it.get("rationale") or "")[:300]})
+    return out[:5]
+
+
+def outcome_for(c: dict, rec: dict) -> str:
+    if rec.get("extraction_status") == "failed":
+        return "extraction_failed"
+    if c["source"] == "missing":
+        return "pending"
+    if c["module"] == "UNKNOWN" or "needs-human" in c.get("flags", []):
+        return "needs_context"
+    if c["module"] in ("BC", "CA") and ({"cross-module", "utility"} & set(c.get("flags", []))):
+        return "shared_technical"
+    return "classified"
 
 
 def normalize(rec: dict, tax: Taxonomy) -> Tuple[Optional[dict], str]:
@@ -56,8 +93,17 @@ def normalize(rec: dict, tax: Taxonomy) -> Tuple[Optional[dict], str]:
     if not purpose:
         return None, f"{key}: empty purpose"
     flags = [str(f) for f in (rec.get("flags") or []) if str(f) in VALID_FLAGS]
-    return {"key": key, "module": m, "submodule": s, "area": a, "confidence": round(conf, 2), "purpose": purpose[:300],
-            "rationale": (rec.get("rationale") or "")[:600], "flags": flags}, ""
+    sec_errors: List[str] = []
+    secondary = normalize_secondary(rec.get("secondary"), tax, key, sec_errors)
+    review_state = str(rec.get("review_state", "")).lower()
+    out = {"key": key, "module": m, "submodule": s, "area": a, "confidence": round(conf, 2), "purpose": purpose[:300],
+           "rationale": (rec.get("rationale") or "")[:600], "flags": flags, "secondary": secondary,
+           "prompt_version": str(rec.get("prompt_version") or ""), "secondary_errors": sec_errors}
+    if review_state in REVIEW_STATES:
+        out["review_state"] = review_state
+    if rec.get("reviewed_by"):
+        out["reviewed_by"] = str(rec["reviewed_by"])[:60]
+    return out, ""
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -108,6 +154,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             norm["source"] = "llm"
             norm["model"] = model
             norm["batch"] = p.stem
+            norm["prompt_version"] = norm["prompt_version"] or str(data.get("prompt_version") or PROMPT_VERSION)
+            errors.extend(f"{p.name}: {e}" for e in norm.pop("secondary_errors"))
             chosen[norm["key"]] = norm   # later files (by mtime) override earlier ones
             stats["llm_valid"] += 1
 
@@ -118,21 +166,35 @@ def main(argv: Optional[List[str]] = None) -> int:
             if not norm or norm["key"] not in inv_by_key:
                 errors.append(f"review_patch: {err or norm['key'] + ' not in inventory'}")
                 continue
+            prev = chosen.get(norm["key"], {})
             norm["source"] = "review"
+            norm["model"] = prev.get("model", "")
+            norm["batch"] = prev.get("batch", "")
+            norm["prompt_version"] = prev.get("prompt_version", "")
+            norm.setdefault("review_state", "reviewed")
+            norm.setdefault("reviewed_by", "abap-reviewer")
+            errors.extend(f"review_patch: {e}" for e in norm.pop("secondary_errors"))
             chosen[norm["key"]] = norm
             stats["review_applied"] += 1
 
     objects = []
+    generated = dt.datetime.now().isoformat(timespec="seconds")
     for rec in inv:
         k = rec["key"]
         c = chosen.get(k)
         e = evidence.get(k, {})
         if c is None:
             c = {"key": k, "module": "UNKNOWN", "submodule": None, "area": None, "confidence": 0.0,
-                 "purpose": rec.get("description", ""), "rationale": "not yet classified", "flags": [], "source": "missing"}
+                 "purpose": rec.get("description", ""), "rationale": "not yet classified", "flags": [], "source": "missing",
+                 "secondary": []}
             stats["unclassified"] += 1
+        c.pop("secondary_errors", None)
+        if c["source"].startswith("heuristic"):
+            c["prompt_version"] = ""
+        outcome = outcome_for(c, rec)
         stats["source:" + c["source"]] += 1
         stats["module:" + c["module"]] += 1
+        stats["outcome:" + outcome] += 1
         objects.append({
             "key": k, "system": rec["system"], "company": rec.get("company", ""), "type": rec["type"], "name": rec["name"],
             "package": rec["package"], "package_desc": rec.get("package_desc", ""), "description": rec.get("description", ""),
@@ -140,7 +202,12 @@ def main(argv: Optional[List[str]] = None) -> int:
             "files": rec.get("files", []),
             "module": c["module"], "submodule": c["submodule"], "area": c["area"], "confidence": c["confidence"],
             "source": c["source"], "model": c.get("model", ""), "purpose": c["purpose"], "rationale": c["rationale"],
-            "flags": c["flags"],
+            "flags": c["flags"], "secondary": c.get("secondary", []),
+            "outcome": outcome,
+            "review_state": c.get("review_state", "proposed"), "reviewed_by": c.get("reviewed_by", ""),
+            "provenance": {"source": c["source"], "model": c.get("model", ""), "batch": c.get("batch", ""),
+                           "prompt_version": c.get("prompt_version", ""), "taxonomy_version": tax.raw.get("version", ""),
+                           "generated": generated},
             "heuristic": {"module": e.get("module"), "submodule": e.get("submodule"), "area": e.get("area"),
                           "top": e.get("top", []), "decision": e.get("decision")},
             "evidence": [f"{s['kind']}:{s['value']}->{s['node']} ({s['weight']})" for s in e.get("signals", [])[:12]],
@@ -149,7 +216,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         })
 
     out = {
-        "generated": dt.datetime.now().isoformat(timespec="seconds"),
+        "generated": generated,
+        "taxonomy_version": tax.raw.get("version", ""),
+        "outcomes": list(OUTCOMES),
         "systems": [{"id": s["id"], "company": s.get("company", "")} for s in cfg.systems],
         "taxonomy": tax.raw["nodes"],
         "stats": dict(stats),

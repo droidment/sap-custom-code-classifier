@@ -126,7 +126,9 @@ class PipelineTest(unittest.TestCase):
         self.assertTrue(all("excerpt" in o and o["excerpt"] for o in b["objects"]))
         # mock LLM result incl. one invalid record
         (self.work / "llm").mkdir(exist_ok=True)
-        results = [{"key": k, "module": "FI", "submodule": "FI-GL", "confidence": 0.7, "purpose": "mock", "rationale": "mock"} for k in keys]
+        results = [{"key": k, "module": "FI", "submodule": "FI-GL", "confidence": 0.7, "purpose": "mock", "rationale": "mock",
+                    "secondary": [{"module": "MM", "submodule": "MM-PUR", "role": "context", "rationale": "reads EKKO"},
+                                  {"module": "XX", "role": "supporting"}]} for k in keys]
         results.append({"key": "SYSA|CLAS|NOPE", "module": "XX", "confidence": 2, "purpose": ""})
         (self.work / "llm" / f"{b['batch_id']}.json").write_text(json.dumps({"batch_id": b["batch_id"], "model": "mock", "results": results}), encoding="utf-8")
         out = run("prep_batches.py")
@@ -139,6 +141,23 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(len([k for k in by if not k.startswith("SYSC|")]), 11)
         self.assertEqual(by["SYSA|PROG|ZHR_TS_REPORT"]["source"], "heuristic")
         self.assertEqual(by[keys[0]]["source"], "llm")
+        # contract fields: secondary (invalid entry dropped, valid one kept), outcome, review_state, provenance
+        self.assertEqual(by[keys[0]]["secondary"], [{"module": "MM", "submodule": "MM-PUR", "area": None, "role": "context", "rationale": "reads EKKO"}])
+        self.assertEqual(by[keys[0]]["outcome"], "classified")
+        self.assertEqual(by[keys[0]]["review_state"], "proposed")
+        self.assertEqual(by[keys[0]]["provenance"]["model"], "mock")
+        self.assertEqual(by[keys[0]]["provenance"]["prompt_version"], "classifier-1.1")
+        self.assertEqual(by[keys[0]]["provenance"]["taxonomy_version"], "2026-10-22")
+        self.assertTrue(all(o["outcome"] in cls["outcomes"] for o in cls["objects"]))
+        # review patch sets review_state
+        (self.work / "review_patch.json").write_text(json.dumps([
+            {"key": keys[0], "module": "FI", "submodule": "FI-GL", "confidence": 0.9, "purpose": "reviewed purpose", "rationale": "review: confirmed"}]), encoding="utf-8")
+        out = run("merge.py", "--apply-review")
+        self.assertIn("MERGE_OK", out)
+        by = {o["key"]: o for o in json.loads((self.work / "classification.json").read_text(encoding="utf-8"))["objects"]}
+        self.assertEqual(by[keys[0]]["review_state"], "reviewed")
+        self.assertEqual(by[keys[0]]["reviewed_by"], "abap-reviewer")
+        self.assertEqual(by[keys[0]]["provenance"]["model"], "mock")   # provenance of the underlying llm result is kept
         self.assertNotIn("missing", {o["source"] for o in cls["objects"] if o["key"] in keys})
         out = run("overlaps.py")
         self.assertIn("OVERLAPS_OK", out)
@@ -160,7 +179,9 @@ class PipelineTest(unittest.TestCase):
         tree = (self.out / "tree.md").read_text(encoding="utf-8")
         self.assertIn("## HCM", tree)
         self.assertIn("HCM-PT-TS", tree)
-        self.assertTrue((self.out / "objects.csv").exists())
+        csv_head = (self.out / "objects.csv").read_text(encoding="utf-8-sig").splitlines()[0]
+        for col in ("secondary", "outcome", "review_state", "prompt_version", "taxonomy_version"):
+            self.assertIn(col, csv_head)
         out = run("target_skeleton.py")
         self.assertIn("TARGET_OK", out)
         self.assertIn("resolve=", out)

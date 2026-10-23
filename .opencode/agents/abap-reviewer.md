@@ -42,10 +42,15 @@ Consistency rules to enforce
 - UNKNOWN is acceptable only when the evidence is truly empty; then flag `needs-human`.
 
 Output
-1. `work/review_patch.json`: a JSON list of corrected records only (objects you keep are omitted):
+1. `work/review_patch.json`: a JSON list of records for every candidate you looked at:
    [{"key": "...", "module": "...", "submodule": null|"...", "area": null|"...", "confidence": 0.0-1.0,
-     "purpose": "...", "rationale": "review: <why>", "flags": [...]}]
-   Ids must come from the taxonomy and form a valid chain.
+     "purpose": "...", "rationale": "review: <why>", "flags": [...],
+     "secondary": [{"module": "...", "submodule": null, "area": null, "role": "supporting|context", "rationale": "..."}],
+     "review_state": "reviewed" | "rejected", "reviewed_by": "abap-reviewer"}]
+   Corrected objects carry the new values; objects you confirm carry their existing values with
+   `review_state: "reviewed"`; use `review_state: "rejected"` with the original values when the object must
+   go to a human (also add flag needs-human). Ids must come from the taxonomy and form a valid chain. Keep the
+   `secondary` list of the original record unless you change it deliberately.
 2. `work/review.md`: a short report: counts per group, how many corrected, the systematic problems you saw
    (e.g. "package ZMISC in SYSB is 70% HR code labelled as tools"), and up to 20 objects that need a human.
 Finish by stating how many records are in the patch.

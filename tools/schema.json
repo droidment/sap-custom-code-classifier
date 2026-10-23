@@ -13,8 +13,31 @@
     "flags": {
       "type": "array",
       "items": { "type": "string" },
-      "description": "optional: cross-module, utility, obsolete-candidate, test-code, mixed-fugr, needs-human, mislabeled-package"
-    }
+      "description": "optional: cross-module, utility, obsolete-candidate, test-code, mixed-fugr, needs-human, mislabeled-package, interface, report-only, generated, copy-of-standard, dead-code"
+    },
+    "secondary": {
+      "type": "array",
+      "maxItems": 5,
+      "description": "optional further assignments when the object materially serves another module. The primary assignment is role 'direct'.",
+      "items": {
+        "type": "object",
+        "required": ["module", "role"],
+        "properties": {
+          "module": { "type": "string" }, "submodule": { "type": ["string", "null"] }, "area": { "type": ["string", "null"] },
+          "role": { "type": "string", "enum": ["supporting", "context"] },
+          "rationale": { "type": "string" }
+        }
+      }
+    },
+    "review_state": { "type": "string", "enum": ["proposed", "reviewed", "rejected"], "description": "set by the review stage only; classifier output is always 'proposed'" },
+    "reviewed_by": { "type": "string" },
+    "prompt_version": { "type": "string", "description": "optional; merge fills the file-level prompt_version or the built-in constant" }
+  },
+  "derived_per_object": {
+    "$comment": "Added by merge.py to every object in work/classification.json",
+    "outcome": "classified | needs_context | shared_technical | extraction_failed | pending",
+    "review_state": "proposed | reviewed | rejected",
+    "provenance": { "source": "heuristic|heuristic+propagation|llm|review|missing", "model": "", "batch": "", "prompt_version": "", "taxonomy_version": "", "generated": "iso timestamp" }
   },
   "batch_result_file": {
     "$comment": "Shape of work/llm/NNN.json written by the classifier agent",

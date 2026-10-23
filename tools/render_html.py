@@ -60,6 +60,8 @@ footer{padding:16px;color:var(--muted);font-size:12px;text-align:center}
  <select id="fConf"><option value="">any confidence</option><option value="hi">≥ 0.8</option><option value="mid">0.6 – 0.8</option><option value="lo">&lt; 0.6</option></select>
  <select id="fOv"><option value="">any overlap</option><option value="identical">identical across systems</option><option value="diverged">diverged across systems</option><option value="similar">similar candidates</option><option value="none">single system only</option></select>
  <select id="fSrc"><option value="">any source</option><option value="heuristic">heuristic</option><option value="heuristic+propagation">propagation</option><option value="llm">LLM</option><option value="review">review</option><option value="missing">unclassified</option></select>
+ <select id="fOut"><option value="">any outcome</option><option value="classified">classified</option><option value="needs_context">needs context</option><option value="shared_technical">shared technical</option><option value="extraction_failed">extraction failed</option><option value="pending">pending</option></select>
+ <select id="fRev"><option value="">any review state</option><option value="proposed">proposed</option><option value="reviewed">reviewed</option><option value="rejected">rejected</option></select>
  <button id="expand">expand all</button><button id="collapse">collapse all</button><button id="theme">theme</button>
  <span class="sub" id="shown"></span>
 </div>
@@ -92,6 +94,8 @@ function matches(o,f){
  if(f.conf==='lo'&&o.confidence>=0.6)return false;
  if(f.ov&&ovStatus(o)!==f.ov)return false;
  if(f.src&&o.source!==f.src)return false;
+ if(f.out&&o.outcome!==f.out)return false;
+ if(f.rev&&o.review_state!==f.rev)return false;
  return true}
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function row(o){
@@ -109,6 +113,9 @@ function detail(o){
  if(o.package_desc)s+=`<dt>Package</dt><dd>${esc(o.package)} – ${esc(o.package_desc)}</dd>`;
  if(o.rationale)s+=`<dt>Rationale</dt><dd>${esc(o.rationale)}</dd>`;
  if(o.flags&&o.flags.length)s+=`<dt>Flags</dt><dd>${o.flags.map(f=>'<span class="chip">'+esc(f)+'</span>').join('')}</dd>`;
+ if(o.secondary&&o.secondary.length)s+=`<dt>Also applies to</dt><dd>${o.secondary.map(x=>'<span class="chip">'+esc((x.area||x.submodule||x.module)+' ('+x.role+')')+'</span>'+(x.rationale?' '+esc(x.rationale):'')).join('<br>')}</dd>`;
+ s+=`<dt>Outcome / review</dt><dd>${esc(o.outcome)} · ${esc(o.review_state)}${o.reviewed_by?' by '+esc(o.reviewed_by):''}</dd>`;
+ if(o.provenance&&(o.provenance.model||o.provenance.prompt_version))s+=`<dt>Provenance</dt><dd class="mono">${esc(o.provenance.model||'')} ${esc(o.provenance.prompt_version||'')} batch ${esc(o.provenance.batch||'-')} taxonomy ${esc(o.provenance.taxonomy_version||'')}</dd>`;
  if(o.heuristic&&o.heuristic.top&&o.heuristic.top.length)s+=`<dt>Heuristic candidates</dt><dd>${o.heuristic.top.map(t=>esc(t[0])+' ('+t[1]+')').join(', ')}${o.heuristic.module&&o.heuristic.module!==o.module?' <span class="chip ov-similar">differs from final</span>':''}</dd>`;
  if(o.evidence&&o.evidence.length)s+=`<dt>Evidence</dt><dd class="mono">${o.evidence.map(esc).join('<br>')}</dd>`;
  if(o.tables&&o.tables.length)s+=`<dt>Tables</dt><dd class="mono">${o.tables.map(esc).join(', ')}</dd>`;
@@ -120,7 +127,7 @@ function detail(o){
  if(o.files&&o.files.length)s+=`<dt>Files</dt><dd class="mono">${o.files.map(esc).join('<br>')}</dd>`;
  return s+'</dl>'}
 function render(){
- const f={q:$('#q').value.trim().toLowerCase(),sys:$('#fSys').value,type:$('#fType').value,mod:$('#fMod').value,conf:$('#fConf').value,ov:$('#fOv').value,src:$('#fSrc').value};
+ const f={q:$('#q').value.trim().toLowerCase(),sys:$('#fSys').value,type:$('#fType').value,mod:$('#fMod').value,conf:$('#fConf').value,ov:$('#fOv').value,src:$('#fSrc').value,out:$('#fOut').value,rev:$('#fRev').value};
  const vis=objs.filter(o=>matches(o,f));
  $('#shown').textContent=vis.length+' of '+objs.length+' objects shown';
  const tree={};vis.forEach(o=>{const m=o.module,s=o.submodule||'_',a=o.area||'_';((tree[m]=tree[m]||{})[s]=tree[m][s]||{})[a]=(tree[m][s][a]||[]);tree[m][s][a].push(o)});
@@ -150,13 +157,14 @@ function cards(){
  const c=[['Objects',objs.length],['Systems',new Set(objs.map(o=>o.system)).size],['Packages',new Set(objs.map(o=>o.system+'|'+o.package)).size],
  ['Modules',new Set(objs.map(o=>o.module)).size],['Auto / heuristic',objs.filter(o=>o.source&&o.source.startsWith('heuristic')).length],['LLM classified',objs.filter(o=>o.source==='llm').length],
  ['Low confidence',objs.filter(o=>o.confidence<0.6).length],['Unclassified',objs.filter(o=>o.module==='UNKNOWN').length],
+ ['Reviewed',objs.filter(o=>o.review_state==='reviewed').length],['Shared technical',objs.filter(o=>o.outcome==='shared_technical').length],
  ['Identical across systems',Object.values(ov).filter(x=>x.status==='identical').length],['Diverged across systems',Object.values(ov).filter(x=>x.status==='diverged').length]];
  $('#cards').innerHTML=c.map(([k,v])=>`<div class="card"><b>${v}</b><span>${k}</span></div>`).join('');
  const bySys={};objs.forEach(o=>bySys[o.system]=(bySys[o.system]||0)+1);
  $('#cards').innerHTML+=Object.entries(bySys).map(([k,v])=>`<div class="card"><b>${v}</b><span>${esc(k)}</span></div>`).join('');
 }
 document.addEventListener('click',e=>{const tr=e.target.closest('tr.obj');if(!tr)return;const d=document.querySelector(`tr.detailrow[data-d="${tr.dataset.k.replace(/"/g,'\\"')}"]`);if(d)d.classList.toggle('hidden')});
-['#q','#fSys','#fType','#fMod','#fConf','#fOv','#fSrc'].forEach(s=>$(s).addEventListener('input',render));
+['#q','#fSys','#fType','#fMod','#fConf','#fOv','#fSrc','#fOut','#fRev'].forEach(s=>$(s).addEventListener('input',render));
 $('#expand').onclick=()=>document.querySelectorAll('details').forEach(d=>d.open=true);
 $('#collapse').onclick=()=>document.querySelectorAll('details').forEach(d=>d.open=false);
 $('#theme').onclick=()=>{const r=document.documentElement;const cur=r.getAttribute('data-theme');r.setAttribute('data-theme',cur==='dark'?'light':'dark')};
@@ -185,6 +193,9 @@ def main(argv: Optional[List[str]] = None) -> int:
             "package_desc": o.get("package_desc", ""), "description": o.get("description", ""), "purpose": o.get("purpose", ""),
             "module": o["module"], "submodule": o.get("submodule"), "area": o.get("area"), "confidence": o.get("confidence", 0),
             "source": o.get("source", ""), "model": o.get("model", ""), "rationale": o.get("rationale", ""), "flags": o.get("flags", []),
+            "secondary": o.get("secondary", []), "outcome": o.get("outcome", "classified"),
+            "review_state": o.get("review_state", "proposed"), "reviewed_by": o.get("reviewed_by", ""),
+            "provenance": o.get("provenance", {}),
             "heuristic": {"module": (o.get("heuristic") or {}).get("module"), "top": (o.get("heuristic") or {}).get("top", [])},
             "evidence": o.get("evidence", [])[:10],
             "tables": list(refs.get("tables", {}))[:20], "functions": list(refs.get("functions", {}))[:15],
