@@ -1,5 +1,5 @@
 ---
-description: Stage 4a - build the self-contained HTML explorer (output/explorer.html) for management. Optional argument: a page title in quotes.
+description: Stage 4a - build the self-contained HTML explorer (output/explorer.html) for management. Args - optional --systems S1D (one or more ids, comma-separated; writes explorer_S1D.html) and --title "...".
 agent: sap-migration
 model: azure/az-gpt-5.6-luna
 ---

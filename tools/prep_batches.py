@@ -18,7 +18,7 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import (  # noqa: E402
@@ -76,6 +76,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--min-confidence", type=float, default=None)
     ap.add_argument("--only-module", default=None)
+    ap.add_argument("--only-system", default=None, help="prepare batches for one system id only")
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args(argv)
     cfg = load_config(args.config)
@@ -113,6 +114,8 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     if args.only_module:
         keys = [k for k in keys if evidence[k]["module"] == args.only_module]
+    if args.only_system:
+        keys = [k for k in keys if inv[k]["system"] == args.only_system]
 
     # stable order: by system, package, name  -> batches stay identical between runs
     keys.sort(key=lambda k: (inv[k]["system"], inv[k]["package"], inv[k]["type"], inv[k]["name"]))
@@ -124,16 +127,26 @@ def main(argv: Optional[List[str]] = None) -> int:
     max_chars = int(ccfg.get("excerpt_max_chars", 7000))
     taxonomy_brief = [{"id": n["id"], "name": n["name"], "parent": n.get("parent")} for n in tax.raw["nodes"]]
 
+    # Batches are numbered per system (S1D-001, S1D-002, ...). Adding a system later therefore never
+    # renumbers or shadows the batches of systems already classified.
+    by_system: Dict[str, List[str]] = {}
+    for k in keys:
+        by_system.setdefault(inv[k]["system"], []).append(k)
+    batch_plan: List[Tuple[str, List[str]]] = []
+    for sysid in sorted(by_system):
+        sys_keys = by_system[sysid]
+        for bi in range(0, len(sys_keys), batch_size):
+            batch_plan.append((f"{prefix}{sysid}-{bi // batch_size + 1:03d}", sys_keys[bi: bi + batch_size]))
+
     written = skipped = 0
-    for bi in range(0, len(keys), batch_size):
-        batch_id = f"{prefix}{bi // batch_size + 1:03d}"
+    for batch_id, batch_keys in batch_plan:
         if args.limit and written >= args.limit:
             break
         if batch_id in existing_results and not args.force:
             skipped += 1
             continue
         objects = []
-        for k in keys[bi: bi + batch_size]:
+        for k in batch_keys:
             rec, e = inv[k], evidence[k]
             objects.append({
                 "key": k, "system": rec["system"], "type": rec["type"], "name": rec["name"],
@@ -151,7 +164,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         write_json(cfg.batches_dir / f"{batch_id}.json", {"batch_id": batch_id, "taxonomy": taxonomy_brief,
                                                            "processes": cat.brief() if cat else [], "objects": objects})
         written += 1
-    total_batches = (len(keys) + batch_size - 1) // batch_size
+    total_batches = len(batch_plan)
     log(f"batches: wrote {written}, skipped {skipped} (already have results), total {total_batches}, objects {len(keys)}")
     print(f"PREP_OK needs_llm={len(keys)} batches_total={total_batches} batches_written={written} "
           f"batches_done={skipped} batch_dir={cfg.batches_dir} llm_dir={cfg.llm_dir}")

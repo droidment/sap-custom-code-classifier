@@ -50,6 +50,16 @@ in `work/unchunk_unresolved.json`; `/unchunk` hands those to the `abap-splitter`
 answers. Re-runs only rebuild packages whose chunk files changed.
 Later: `/tree`, `/target-packages`.
 
+### One system at a time
+You can run the whole chain for one company first and add the others later; nothing has to be redone.
+Put only that system in `migration.config.json` (or keep all and use `/classify --only-system S1D`), run
+`/inventory`, `/classify` until 0 pending, `/review`, then `/explorer --systems S1D` for its own
+`output/explorer_S1D.html` (and `/tree --systems S1D` for `tree_S1D.md` / `objects_S1D.csv`). When you add
+the next system, `/inventory` and `/classify` extend the existing state: object keys carry the system id and
+LLM batches are numbered per system (`S1D-001`, `S2D-001`, ...), so earlier results are kept and only the new
+objects go to the LLM. Overlaps between systems appear once two or more systems are in the config, and the
+unfiltered `/explorer` then shows them.
+
 ### Memory and time on large systems
 - `classification.batch_size` (default 20 objects) and `batches_per_run` (default 10) in
   `migration.config.json` bound one `/classify` invocation. With 10 x 20 objects per run and ~15k objects

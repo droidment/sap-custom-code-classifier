@@ -196,11 +196,16 @@ cards();render();
 def main(argv: Optional[List[str]] = None) -> int:
     ap = base_argparser(__doc__)
     ap.add_argument("--title", default="SAP custom code explorer")
+    ap.add_argument("--systems", default=None, help="comma-separated system ids to include (default all); output becomes explorer_<ids>.html")
     args = ap.parse_args(argv)
     cfg = load_config(args.config)
     tax = load_taxonomy(cfg.taxonomy_path)
     cls = read_json(cfg.classification_file)
     overlaps = read_json(cfg.overlaps_file).get("index", {}) if cfg.overlaps_file.exists() else {}
+    only = {s.strip().upper() for s in args.systems.split(",") if s.strip()} if args.systems else None
+    if only:
+        cls["objects"] = [o for o in cls["objects"] if o["system"].upper() in only]
+        cls["systems"] = [s for s in cls["systems"] if s["id"].upper() in only]
 
     objects = []
     for o in cls["objects"]:
@@ -228,7 +233,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     html = (TEMPLATE.replace("__TITLE__", args.title).replace("__GENERATED__", cls["generated"])
             .replace("__NOBJ__", str(len(objects))).replace("__SYSTEMS__", systems).replace("__DATA__", blob))
     cfg.output_dir.mkdir(parents=True, exist_ok=True)
-    out = cfg.output_dir / "explorer.html"
+    out = cfg.output_dir / ("explorer.html" if not only else f"explorer_{'_'.join(sorted(only))}.html")
     out.write_text(html, encoding="utf-8")
     mods = Counter(o["module"] for o in objects)
     log(f"explorer: {out} ({out.stat().st_size // 1024} KB); modules {dict(mods)}")

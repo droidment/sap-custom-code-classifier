@@ -26,10 +26,16 @@ CSV_COLUMNS = ["system", "company", "package", "package_desc", "type", "name", "
 
 def main(argv: Optional[List[str]] = None) -> int:
     ap = base_argparser(__doc__)
+    ap.add_argument("--systems", default=None, help="comma-separated system ids to include (default all); outputs get a _<ids> suffix")
     args = ap.parse_args(argv)
     cfg = load_config(args.config)
     tax = load_taxonomy(cfg.taxonomy_path)
     cls = read_json(cfg.classification_file)
+    only = {s.strip().upper() for s in args.systems.split(",") if s.strip()} if args.systems else None
+    suffix = f"_{'_'.join(sorted(only))}" if only else ""
+    if only:
+        cls["objects"] = [o for o in cls["objects"] if o["system"].upper() in only]
+        cls["systems"] = [s for s in cls["systems"] if s["id"].upper() in only]
     objs = cls["objects"]
     ov_index = read_json(cfg.overlaps_file).get("index", {}) if cfg.overlaps_file.exists() else {}
     cfg.output_dir.mkdir(parents=True, exist_ok=True)
@@ -91,10 +97,10 @@ def main(argv: Optional[List[str]] = None) -> int:
                     lines.append(f"  - `{o['type']} {o['name']}` [{role}, {basis}] - {short(o.get('purpose') or o.get('description'), 80)} "
                                  f"| {o['system']} / {o['package']} | {o['module']}")
             lines.append("")
-    (cfg.output_dir / "tree.md").write_text("\n".join(lines), encoding="utf-8")
+    (cfg.output_dir / f"tree{suffix}.md").write_text("\n".join(lines), encoding="utf-8")
 
     # ---- objects.csv ---------------------------------------------------------------
-    with (cfg.output_dir / "objects.csv").open("w", newline="", encoding="utf-8-sig") as fh:
+    with (cfg.output_dir / f"objects{suffix}.csv").open("w", newline="", encoding="utf-8-sig") as fh:
         w = csv.DictWriter(fh, fieldnames=CSV_COLUMNS)
         w.writeheader()
         for o in sorted(objs, key=lambda o: (o["module"], o.get("submodule") or "", o.get("area") or "", o["type"], o["name"], o["system"])):
@@ -119,9 +125,10 @@ def main(argv: Optional[List[str]] = None) -> int:
                 "loc": o.get("loc", 0), "function_modules": ";".join(c["name"] for c in o.get("children", [])),
                 "files": ";".join(o.get("files", [])),
             })
-    shutil.copyfile(cfg.classification_file, cfg.output_dir / "classification.json")
-    log(f"tree: {cfg.output_dir / 'tree.md'}, csv: {cfg.output_dir / 'objects.csv'}")
-    print(f"TREE_OK objects={len(objs)} tree={cfg.output_dir / 'tree.md'} csv={cfg.output_dir / 'objects.csv'}")
+    if not only:
+        shutil.copyfile(cfg.classification_file, cfg.output_dir / "classification.json")
+    log(f"tree: {cfg.output_dir / f'tree{suffix}.md'}, csv: {cfg.output_dir / f'objects{suffix}.csv'}")
+    print(f"TREE_OK objects={len(objs)} tree={cfg.output_dir / f'tree{suffix}.md'} csv={cfg.output_dir / f'objects{suffix}.csv'}")
     return 0
 
 

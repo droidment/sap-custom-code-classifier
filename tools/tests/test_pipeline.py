@@ -195,6 +195,16 @@ class PipelineTest(unittest.TestCase):
         csv_head = (self.out / "objects.csv").read_text(encoding="utf-8-sig").splitlines()[0]
         for col in ("secondary", "process_primary", "process_all", "outcome", "review_state", "prompt_version", "taxonomy_version"):
             self.assertIn(col, csv_head)
+        # per-system outputs and per-system batch ids
+        self.assertTrue(b["batch_id"].startswith(("SYSA-", "SYSB-", "SYSC-")), b["batch_id"])
+        out = run("render_html.py", "--systems", "SYSA")
+        self.assertIn("explorer_SYSA.html", out)
+        html_a = (self.out / "explorer_SYSA.html").read_text(encoding="utf-8")
+        self.assertIn("ZHR_TS_REPORT", html_a)
+        self.assertNotIn("ZFI_POST", html_a)
+        out = run("render_tree.py", "--systems", "SYSB")
+        self.assertIn("objects_SYSB.csv", out)
+        self.assertIn("ZFI_POST", (self.out / "tree_SYSB.md").read_text(encoding="utf-8"))
         out = run("target_skeleton.py")
         self.assertIn("TARGET_OK", out)
         self.assertIn("resolve=", out)

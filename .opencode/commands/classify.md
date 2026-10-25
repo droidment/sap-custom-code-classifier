@@ -1,5 +1,5 @@
 ---
-description: Stage 2 - score evidence, build LLM batches, classify the pending batches in parallel, merge, detect overlaps. Resumable; re-run until no batches remain. Args are passed to prep_batches (e.g. --limit 2 for a smoke test, --min-confidence 0.6 to re-run weak ones).
+description: Stage 2 - score evidence, build LLM batches, classify the pending batches in parallel, merge, detect overlaps. Resumable; re-run until no batches remain. Args are passed to prep_batches (--limit 2 smoke test, --only-system S1D one system at a time, --min-confidence 0.6 re-run weak ones).
 agent: sap-migration
 ---
 Run stage 2 (classification). Deterministic parts have already been executed; their output follows.
