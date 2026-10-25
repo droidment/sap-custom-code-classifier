@@ -311,9 +311,10 @@ used_by_custom, excerpt}]}`. Excerpt per source file: file name, up to 15 header
 code lines and every line matching SELECT/FROM/JOIN/UPDATE/MODIFY/INSERT/DELETE/CALL FUNCTION/CALL METHOD/
 CALL TRANSACTION/SUBMIT/INFOTYPES/TABLES/INCLUDE/MESSAGE/AUTHORITY-CHECK/ENHANCEMENT/INTERFACES/INHERITING/
 CREATE OBJECT/REPORT/FUNCTION/CLASS ... DEFINITION/METHODS/FORM/GET PERNR/NODES/PARAMETERS/SELECT-OPTIONS/
-RAISE/GET BADI/OPEN DATASET/`CL_x=>`/`NEW x(`, capped by excerpt_max_lines/chars. Skip batches that already
-have `work/llm/<id>.json` (unless `--force`). Options `--limit N`, `--min-confidence X` (re-batch objects
-below X from classification.json, ids `R001...`), `--only-module M`. Summary `PREP_OK needs_llm=
+RAISE/GET BADI/OPEN DATASET/`CL_x=>`/`NEW x(`, capped by excerpt_max_lines/chars. Batches are numbered PER SYSTEM: `<SYS>-001`, `<SYS>-002`, ... (keys grouped by system, each group sorted
+by package, type, name), so adding a system later never renumbers existing batches. Skip batches that
+already have `work/llm/<id>.json` (unless `--force`). Options `--limit N`, `--min-confidence X` (re-batch
+objects below X from classification.json, ids prefixed `R`), `--only-module M`, `--only-system SYS`. Summary `PREP_OK needs_llm=
 batches_total= batches_written= batches_done= batch_dir= llm_dir=`.
 `tools/pending.py` prints `PENDING total= done= batches_per_run=`, `THIS_RUN <ids or none>`,
 `REMAINING_AFTER_THIS_RUN n`.
@@ -372,13 +373,15 @@ corrected records, same shape as 8.3) and `work/review.md`; `merge.py --apply-re
   Area › table of objects (type, name + FM count chip + overlap chip, purpose, system chip + package,
   confidence coloured + source). Clicking a row toggles a detail block: classification chain, description,
   package, rationale, flags, heuristic candidates (mark when they differ), evidence, tables, function calls,
-  FMs, uses / used by, overlap info, files. Phone width: 16px gutters, hide one column. Summary
+  FMs, uses / used by, overlap info, files. Phone width: 16px gutters, hide one column. Option
+  `--systems S1D,S2D` restricts to those systems and writes `explorer_S1D_S2D.html`. Summary
   `EXPLORER_OK objects= file= size_kb=`.
 - `tools/render_tree.py` -> `output/tree.md` (`## MODULE - name (n)`, `- **SUB - name** (n)`, `- *AREA*`,
   object lines `` `TYPE NAME` - purpose | SYS / PKG | conf 0.xx (FMs: n) [identical: A,B] ``),
   `output/objects.csv` (utf-8-sig; columns system, company, package, package_desc, type, name, description,
   module, module_name, submodule, submodule_name, area, area_name, confidence, source, purpose, flags,
-  overlap_status, overlap_systems, loc, function_modules, files), copy of classification.json. `TREE_OK`.
+  overlap_status, overlap_systems, loc, function_modules, files), copy of classification.json. Option
+  `--systems` as for the explorer (suffix `_S1D` on tree and csv, no classification copy). `TREE_OK`.
 - `tools/target_skeleton.py [--prefix Z_] [--min-confidence 0.6]` -> `work/target_draft.json`,
   `output/object_moves.csv`, `output/target_packages_draft.md`. Package per taxonomy node in use:
   `Z_HCM`, `Z_HCM_PT`, `Z_HCM_PT_TS` (ids with `-` -> `_`), `Z_UNASSIGNED` for UNKNOWN; parents created
