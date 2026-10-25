@@ -1,0 +1,69 @@
+{
+  "_comment": "LOCAL business-process catalog in the style of SAP's Reference Business Architecture (process group > process module). Written by the project, not published by SAP: ids and module names are project aliases. Replace or extend with the official SAP reference snapshot when it is available (keep ids stable or add an 'alias_of' field). Segments/activities are intentionally not modelled.",
+  "version": "local-2026-10-25",
+  "source": "local",
+  "groups": [
+    { "id": "L2C", "name": "Lead to Cash", "modules": [
+      { "id": "L2C.QUOTE", "name": "Opportunity to Quote", "description": "inquiries, quotations, contracts and pricing agreements with customers" },
+      { "id": "L2C.ORDER", "name": "Order to Fulfill", "description": "sales order management, availability, order changes, EDI order intake" },
+      { "id": "L2C.DELIVER", "name": "Deliver to Customer", "description": "outbound deliveries, picking, packing, goods issue, shipment" },
+      { "id": "L2C.INVOICE", "name": "Invoice to Cash", "description": "billing, receivables, credit, dunning, collections, cash application" },
+      { "id": "L2C.SERVICE", "name": "Service to Cash", "description": "customer service orders, repairs, warranty, returns" },
+      { "id": "L2C.CUSTOMER", "name": "Manage Customer Data", "description": "customer master sales and finance views" }
+    ] },
+    { "id": "S2P", "name": "Source to Pay", "modules": [
+      { "id": "S2P.SOURCE", "name": "Source to Contract", "description": "RFQs, quotations, contracts, scheduling agreements, source lists, supplier evaluation" },
+      { "id": "S2P.PROCURE", "name": "Procure to Receive", "description": "requisitions, purchase orders, release strategies, confirmations, goods receipt" },
+      { "id": "S2P.SERVICES", "name": "Procure Services", "description": "service purchase orders and service entry sheets" },
+      { "id": "S2P.INVOICE", "name": "Invoice to Pay", "description": "supplier invoice verification, payables, payment runs, payment media" },
+      { "id": "S2P.SUPPLIER", "name": "Manage Supplier Data", "description": "vendor master purchasing and finance views" }
+    ] },
+    { "id": "P2F", "name": "Plan to Fulfill", "modules": [
+      { "id": "P2F.PLAN", "name": "Forecast to Plan", "description": "demand management, MRP, planned orders, capacity" },
+      { "id": "P2F.PRODUCE", "name": "Plan to Produce", "description": "production and process orders, confirmations, repetitive manufacturing, production master data" },
+      { "id": "P2F.INSPECT", "name": "Make to Inspect", "description": "inspection lots, results, usage decisions, quality notifications, inspection planning" },
+      { "id": "P2F.INVENTORY", "name": "Receive to Inventory", "description": "goods movements, stock, physical inventory, batches" },
+      { "id": "P2F.WAREHOUSE", "name": "Store to Pick", "description": "warehouse management, transfer orders, bins, RF" },
+      { "id": "P2F.TRANSPORT", "name": "Plan to Transport", "description": "shipments, freight, transportation planning" },
+      { "id": "P2F.PRODUCT", "name": "Manage Product Data", "description": "material master, variant configuration, handling-unit setup" }
+    ] },
+    { "id": "R2R", "name": "Record to Report", "modules": [
+      { "id": "R2R.LEDGER", "name": "Post to Ledger", "description": "general ledger postings, documents, ledgers, special ledgers" },
+      { "id": "R2R.CLOSE", "name": "Close to Report", "description": "period and year-end closing, valuations, reclassifications, financial statements" },
+      { "id": "R2R.COST", "name": "Manage Cost Accounting", "description": "cost centers, internal orders, allocations, settlements" },
+      { "id": "R2R.PRODUCTCOST", "name": "Cost Products", "description": "product costing, material ledger, WIP, variances" },
+      { "id": "R2R.PROFIT", "name": "Analyze Profitability", "description": "CO-PA, profit center accounting, margin reporting" },
+      { "id": "R2R.TAX", "name": "Manage Taxes", "description": "VAT, withholding, country tax reporting" },
+      { "id": "R2R.CASH", "name": "Manage Cash and Banks", "description": "bank statements, lockbox, cash management, house banks" }
+    ] },
+    { "id": "H2R", "name": "Recruit to Retire", "modules": [
+      { "id": "H2R.HIRE", "name": "Recruit to Onboard", "description": "recruitment, applicants, hiring" },
+      { "id": "H2R.ADMIN", "name": "Manage Workforce", "description": "personnel administration, org management, self-services, HR workflows and forms" },
+      { "id": "H2R.TIME", "name": "Time to Pay", "description": "time recording, timesheets, absences, time evaluation" },
+      { "id": "H2R.PAY", "name": "Run Payroll", "description": "payroll, posting to accounting, payslips" },
+      { "id": "H2R.DEVELOP", "name": "Develop to Perform", "description": "qualifications, appraisals, training, careers" },
+      { "id": "H2R.REWARD", "name": "Reward to Benefit", "description": "compensation and benefits" },
+      { "id": "H2R.TRAVEL", "name": "Travel to Reimburse", "description": "travel requests, expenses, settlement" }
+    ] },
+    { "id": "A2D", "name": "Acquire to Decommission", "modules": [
+      { "id": "A2D.ASSET", "name": "Acquire to Retire Asset", "description": "fixed asset accounting, depreciation, retirements" },
+      { "id": "A2D.MAINTAIN", "name": "Operate to Maintain", "description": "technical objects, maintenance notifications and orders, maintenance plans" }
+    ] },
+    { "id": "I2M", "name": "Idea to Market", "modules": [
+      { "id": "I2M.DESIGN", "name": "Design to Release", "description": "documents, classification, engineering change, product structures" },
+      { "id": "I2M.PROJECT", "name": "Plan to Deliver Project", "description": "projects, WBS, networks, project costs and settlement" }
+    ] },
+    { "id": "GOV", "name": "Govern Enterprise Data (local)", "modules": [
+      { "id": "GOV.PARTNER", "name": "Manage Business Partners", "description": "business partner and address management" },
+      { "id": "GOV.COMMON", "name": "Manage Common Data", "description": "change documents, number ranges, texts, units, currencies, calendars" }
+    ] },
+    { "id": "TEC", "name": "Technology and Integration (local)", "modules": [
+      { "id": "TEC.INTEGRATE", "name": "Integrate Systems", "description": "IDoc/ALE/EDI, RFC, web services, OData, Fiori infrastructure" },
+      { "id": "TEC.WORKFLOW", "name": "Run Workflow Technology", "description": "generic workflow technology and tooling" },
+      { "id": "TEC.OUTPUT", "name": "Produce Output", "description": "forms, printing, email, files" },
+      { "id": "TEC.SECURE", "name": "Secure and Authorize", "description": "users, roles, authorizations" },
+      { "id": "TEC.OPERATE", "name": "Operate and Develop", "description": "utilities, jobs, transports, development tools, UI frameworks" },
+      { "id": "TEC.REPORT", "name": "Extract for Analytics", "description": "BW extractors and data sources" }
+    ] }
+  ]
+}

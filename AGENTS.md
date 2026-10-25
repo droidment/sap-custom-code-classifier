@@ -28,7 +28,7 @@ find overlaps between the systems, and propose the target package design for the
 | `migration.config.json` | system roots (+ `format: abapgit|chunks` per system), thresholds, batch sizes |
 | `work/unchunked/<SYS>/` | abapGit-style rebuild of a chunked export (`tools/unchunk.py`, `/unchunk`); the pipeline reads it instead of the raw chunks |
 | `work/unchunk_unresolved.json`, `work/unchunk_resolution.json` | segments the chunk parser could not name; the `abap-splitter` subagent resolves them |
-| `tools/taxonomy/` | `nodes.json` + `rules_*.json` (+ optional `rules_custom.json`) |
+| `tools/taxonomy/` | `nodes.json` + `rules_*.json` (+ optional `rules_custom.json`); `processes.json` (local business-process catalog) + `crosswalk.json` (module -> process defaults) |
 | `work/inventory.jsonl` | one record per object |
 | `work/evidence.jsonl` | signals, scores, heuristic decision, dependency edges |
 | `work/auto.json`, `work/batches/`, `work/llm/` | heuristic results, LLM input batches, LLM results |

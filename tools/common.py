@@ -414,6 +414,73 @@ def load_taxonomy(path: Path) -> Taxonomy:
 
 
 # --------------------------------------------------------------------------------------
+# Business-process catalog (second classification dimension) and module crosswalk
+# --------------------------------------------------------------------------------------
+
+PROCESS_ROLES = ("direct", "supporting", "context")
+
+
+@dataclass
+class ProcessCatalog:
+    version: str
+    source: str
+    groups: Dict[str, dict]                 # id -> {id, name}
+    modules: Dict[str, dict]                # id -> {id, name, description, group}
+    crosswalk: Dict[str, List[dict]]        # taxonomy node id -> [{process, role}]
+    crosswalk_version: str = ""
+
+    def valid(self, pid: Optional[str]) -> bool:
+        return bool(pid) and pid in self.modules
+
+    def label(self, pid: str) -> str:
+        m = self.modules.get(pid)
+        if not m:
+            return pid
+        return f"{self.groups[m['group']]['name']} > {m['name']}"
+
+    def brief(self) -> List[dict]:
+        return [{"id": m["id"], "name": m["name"], "group": self.groups[m["group"]]["name"], "description": m.get("description", "")}
+                for m in self.modules.values()]
+
+    def defaults_for(self, tax: "Taxonomy", node: Optional[str]) -> List[dict]:
+        """Crosswalk entries for the most specific node (or ancestor) that has one."""
+        if not node or node not in tax.nodes:
+            return []
+        for cand in reversed(tax.ancestors(node)):
+            if cand in self.crosswalk:
+                return [dict(e) for e in self.crosswalk[cand]]
+        return []
+
+
+def load_processes(tax_dir: Path) -> Optional[ProcessCatalog]:
+    """Load processes.json + crosswalk.json from the taxonomy directory; None if absent."""
+    tax_dir = Path(tax_dir)
+    pf, cf = tax_dir / "processes.json", tax_dir / "crosswalk.json"
+    if not pf.exists():
+        return None
+    raw = read_json(pf)
+    groups: Dict[str, dict] = {}
+    modules: Dict[str, dict] = {}
+    for g in raw.get("groups", []):
+        groups[g["id"]] = {"id": g["id"], "name": g["name"]}
+        for m in g.get("modules", []):
+            if m["id"] in modules:
+                raise SystemExit(f"processes.json: duplicate module id {m['id']}")
+            modules[m["id"]] = {"id": m["id"], "name": m["name"], "description": m.get("description", ""), "group": g["id"]}
+    cw_raw = read_json(cf) if cf.exists() else {"map": {}}
+    crosswalk: Dict[str, List[dict]] = {}
+    for node, entries in cw_raw.get("map", {}).items():
+        for e in entries:
+            if e.get("process") not in modules:
+                raise SystemExit(f"crosswalk.json: node {node} refers to unknown process {e.get('process')}")
+            if e.get("role", "direct") not in PROCESS_ROLES:
+                raise SystemExit(f"crosswalk.json: node {node} has invalid role {e.get('role')}")
+        crosswalk[node] = [{"process": e["process"], "role": e.get("role", "direct")} for e in entries]
+    return ProcessCatalog(version=str(raw.get("version", "")), source=str(raw.get("source", "local")), groups=groups,
+                          modules=modules, crosswalk=crosswalk, crosswalk_version=str(cw_raw.get("version", "")))
+
+
+# --------------------------------------------------------------------------------------
 # Misc
 # --------------------------------------------------------------------------------------
 

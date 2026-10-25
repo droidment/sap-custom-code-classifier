@@ -19,7 +19,8 @@ from common import base_argparser, load_config, load_taxonomy, log, read_json, s
 
 CSV_COLUMNS = ["system", "company", "package", "package_desc", "type", "name", "description", "module", "module_name",
                "submodule", "submodule_name", "area", "area_name", "confidence", "source", "purpose", "flags",
-               "secondary", "outcome", "review_state", "reviewed_by", "model", "prompt_version", "taxonomy_version",
+               "secondary", "process_primary", "process_primary_name", "process_all", "process_basis",
+               "outcome", "review_state", "reviewed_by", "model", "prompt_version", "taxonomy_version",
                "overlap_status", "overlap_systems", "loc", "function_modules", "files"]
 
 
@@ -65,6 +66,31 @@ def main(argv: Optional[List[str]] = None) -> int:
                     lines.append(f"{a_indent}- `{o['type']} {o['name']}` - {short(o.get('purpose') or o.get('description'), 90)} "
                                  f"| {o['system']} / {o['package']} | conf {o['confidence']:.2f}{fms}{tag}")
         lines.append("")
+
+    # ---- process view -------------------------------------------------------------
+    pcat = cls.get("process_catalog")
+    if pcat:
+        lines += ["", f"# Custom code by business process", "",
+                  f"Catalog: {pcat['source']} {pcat['version']} (crosswalk {pcat.get('crosswalk_version', '')}). "
+                  "An object appears under every process it is assigned to; the role is shown per line.", ""]
+        mod_info = {m["id"]: m for m in pcat["modules"]}
+        by_proc: Dict[str, List[tuple]] = defaultdict(list)
+        for o in objs:
+            for p in o.get("process", []):
+                by_proc[p["process"]].append((p["role"], p.get("basis", ""), o))
+        for group in pcat["groups"]:
+            mods = [m for m in pcat["modules"] if m["group"] == group["name"] and by_proc.get(m["id"])]
+            n_group = sum(len(by_proc[m["id"]]) for m in mods)
+            if not n_group:
+                continue
+            lines.append(f"## {group['id']} - {group['name']}  ({n_group} assignments)")
+            for m in mods:
+                items = sorted(by_proc[m["id"]], key=lambda t: (t[0] != "direct", t[2]["type"], t[2]["name"], t[2]["system"]))
+                lines.append(f"- **{m['id']} - {m['name']}** ({len(items)})")
+                for role, basis, o in items:
+                    lines.append(f"  - `{o['type']} {o['name']}` [{role}, {basis}] - {short(o.get('purpose') or o.get('description'), 80)} "
+                                 f"| {o['system']} / {o['package']} | {o['module']}")
+            lines.append("")
     (cfg.output_dir / "tree.md").write_text("\n".join(lines), encoding="utf-8")
 
     # ---- objects.csv ---------------------------------------------------------------
@@ -82,6 +108,10 @@ def main(argv: Optional[List[str]] = None) -> int:
                 "confidence": o["confidence"], "source": o["source"], "purpose": o.get("purpose", ""),
                 "flags": ";".join(o.get("flags", [])),
                 "secondary": ";".join(f"{s.get('area') or s.get('submodule') or s['module']}({s['role']})" for s in o.get("secondary", [])),
+                "process_primary": next((p["process"] for p in o.get("process", []) if p["role"] == "direct"), ""),
+                "process_primary_name": next((p.get("label", "") for p in o.get("process", []) if p["role"] == "direct"), ""),
+                "process_all": ";".join(f"{p['process']}({p['role']})" for p in o.get("process", [])),
+                "process_basis": next((p.get("basis", "") for p in o.get("process", [])), ""),
                 "outcome": o.get("outcome", ""), "review_state": o.get("review_state", ""), "reviewed_by": o.get("reviewed_by", ""),
                 "model": (o.get("provenance") or {}).get("model", ""), "prompt_version": (o.get("provenance") or {}).get("prompt_version", ""),
                 "taxonomy_version": (o.get("provenance") or {}).get("taxonomy_version", ""),

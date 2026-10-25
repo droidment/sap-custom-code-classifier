@@ -50,6 +50,19 @@ Every object in `work/classification.json` also carries:
   `taxonomy_version` comes from `tools/taxonomy/nodes.json`.
 All of them appear as CSV columns and in the explorer (outcome and review-state filters).
 
+## Business process (second dimension)
+`tools/taxonomy/processes.json` is a LOCAL catalog in the style of SAP's Reference Business Architecture:
+process group (Lead to Cash, Source to Pay, Plan to Fulfill, Record to Report, Recruit to Retire, Acquire to
+Decommission, Idea to Market) plus two local groups for data governance and technology, each with process
+modules (`S2P.PROCURE` Procure to Receive, `P2F.INSPECT` Make to Inspect, ...). It is a project alias set,
+not an SAP publication; swap in the official snapshot when available and keep the ids stable.
+`tools/taxonomy/crosswalk.json` maps module-taxonomy nodes to default process assignments (most specific node
+wins). merge derives `process: [{process, role, label, basis, rationale}]` per object: an explicit list from
+the classifier/reviewer (basis llm/review) wins; otherwise the crosswalk of the primary assignment plus the
+crosswalk of each secondary assignment with that assignment's role (basis crosswalk). Technical code maps to
+the TEC.* modules; UNKNOWN has no process. The explorer has a "group by business process" view and a process
+filter; tree.md has a process section; the CSV has process_primary / process_all / process_basis.
+
 ## Re-running and tuning
 - `/classify --limit 1`: smoke test on one batch.  `/classify --min-confidence 0.6`: re-batch weak objects
   (batch ids `R001...`).  `/classify --only-module UNKNOWN`: only the undecided.

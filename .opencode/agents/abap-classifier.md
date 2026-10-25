@@ -67,6 +67,12 @@ Rules
   use `secondary` to hedge an uncertain primary; lower the confidence instead.
 - A broad supported assignment is preferable to an unsupported leaf: stop at the submodule or module when
   the evidence does not reach the area.
+- Business process (second dimension): the batch carries `processes` (the local process catalog: group >
+  module ids such as `S2P.PROCURE`, `P2F.INSPECT`) and each object's `process_default`, derived from the
+  module by a crosswalk. Leave `process` empty when the default is right. Set `process` only when the object
+  belongs to a different process than its module suggests, or serves several processes (e.g. a production
+  confirmation exit that also creates FI postings -> `P2F.PRODUCE` direct + `R2R.LEDGER` supporting).
+  Use ids from `processes` only; roles direct | supporting | context.
 
 Output: write EXACTLY one file `work/llm/<batch_id>.json` with this shape and nothing else:
 {
@@ -76,10 +82,11 @@ Output: write EXACTLY one file `work/llm/<batch_id>.json` with this shape and no
   "results": [
     {"key": "<key exactly as in the batch>", "module": "<id>", "submodule": "<id or null>", "area": "<id or null>",
      "confidence": 0.0-1.0, "purpose": "<one sentence>", "rationale": "<the evidence that decided it>", "flags": [],
-     "secondary": [{"module": "<id>", "submodule": "<id or null>", "area": "<id or null>", "role": "supporting|context", "rationale": "<why>"}]}
+     "secondary": [{"module": "<id>", "submodule": "<id or null>", "area": "<id or null>", "role": "supporting|context", "rationale": "<why>"}],
+     "process": [{"process": "<process id>", "role": "direct|supporting|context", "rationale": "<why>"}]}
   ]
 }
-`secondary` may be an empty list. Never set `review_state`; that belongs to the review stage.
+`secondary` and `process` may be empty lists. Never set `review_state`; that belongs to the review stage.
 Every object in the batch must appear exactly once. Module/submodule/area must be ids from the batch's
 `taxonomy` list and must form a valid parent chain. Do not write anything else, do not modify other files,
 and finish by stating the batch id and the count of results.

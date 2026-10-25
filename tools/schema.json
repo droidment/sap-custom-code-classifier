@@ -29,6 +29,20 @@
         }
       }
     },
+    "process": {
+      "type": "array",
+      "maxItems": 5,
+      "description": "optional explicit business-process assignments (ids from tools/taxonomy/processes.json). When empty, merge derives them from the module via tools/taxonomy/crosswalk.json (basis 'crosswalk').",
+      "items": {
+        "type": "object",
+        "required": ["process"],
+        "properties": {
+          "process": { "type": "string", "description": "e.g. S2P.PROCURE" },
+          "role": { "type": "string", "enum": ["direct", "supporting", "context"], "default": "direct" },
+          "rationale": { "type": "string" }
+        }
+      }
+    },
     "review_state": { "type": "string", "enum": ["proposed", "reviewed", "rejected"], "description": "set by the review stage only; classifier output is always 'proposed'" },
     "reviewed_by": { "type": "string" },
     "prompt_version": { "type": "string", "description": "optional; merge fills the file-level prompt_version or the built-in constant" }

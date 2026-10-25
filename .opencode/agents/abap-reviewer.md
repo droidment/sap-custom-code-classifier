@@ -46,7 +46,10 @@ Output
    [{"key": "...", "module": "...", "submodule": null|"...", "area": null|"...", "confidence": 0.0-1.0,
      "purpose": "...", "rationale": "review: <why>", "flags": [...],
      "secondary": [{"module": "...", "submodule": null, "area": null, "role": "supporting|context", "rationale": "..."}],
+     "process": [{"process": "<id from the catalog>", "role": "direct|supporting|context", "rationale": "..."}],
      "review_state": "reviewed" | "rejected", "reviewed_by": "abap-reviewer"}]
+   `process` is optional: omit it to keep the object's current process assignment (crosswalk or classifier);
+   set it when the business process differs from what the module implies.
    Corrected objects carry the new values; objects you confirm carry their existing values with
    `review_state: "reviewed"`; use `review_state: "rejected"` with the original values when the object must
    go to a human (also add flag needs-human). Ids must come from the taxonomy and form a valid chain. Keep the

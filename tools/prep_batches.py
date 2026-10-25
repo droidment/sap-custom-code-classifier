@@ -22,7 +22,7 @@ from typing import Dict, List, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import (  # noqa: E402
-    base_argparser, code_lines, comment_lines, load_config, load_taxonomy, log, read_json, read_jsonl,
+    base_argparser, code_lines, comment_lines, load_config, load_processes, load_taxonomy, log, read_json, read_jsonl,
     read_text, write_json,
 )
 
@@ -81,6 +81,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     cfg = load_config(args.config)
     ccfg = cfg.classification
     tax = load_taxonomy(cfg.taxonomy_path)
+    cat = load_processes(cfg.taxonomy_path)
     inv = {r["key"]: r for r in read_jsonl(cfg.inventory_file)}
     evidence = {r["key"]: r for r in read_jsonl(cfg.evidence_file)}
     roots = cfg.roots()
@@ -140,12 +141,15 @@ def main(argv: Optional[List[str]] = None) -> int:
                 "description": rec.get("description", ""), "loc": rec.get("loc", 0),
                 "children": [{"name": c["name"], "description": c.get("description", "")} for c in rec.get("children", [])][:40],
                 "heuristic_top": e.get("top", []), "heuristic_pick": {"module": e["module"], "submodule": e["submodule"], "area": e["area"]},
+                "process_default": [p["process"] + " (" + p["role"] + ")" for p in
+                                    (cat.defaults_for(tax, tax.deepest(e["module"], e["submodule"], e["area"])) if cat else [])],
                 "evidence": [f"{s['kind']}:{s['value']}->{s['node']}" for s in e.get("signals", [])[:15]],
                 "refs": {kk: list(vv)[:15] for kk, vv in e.get("refs", {}).items() if kk in ("tables", "functions", "classes", "tcodes", "badis", "includes", "authobjs")},
                 "uses_custom": e.get("uses", [])[:15], "used_by_custom": e.get("used_by", [])[:15],
                 "excerpt": excerpt_for(roots[rec["system"]], rec, max_lines, max_chars),
             })
-        write_json(cfg.batches_dir / f"{batch_id}.json", {"batch_id": batch_id, "taxonomy": taxonomy_brief, "objects": objects})
+        write_json(cfg.batches_dir / f"{batch_id}.json", {"batch_id": batch_id, "taxonomy": taxonomy_brief,
+                                                           "processes": cat.brief() if cat else [], "objects": objects})
         written += 1
     total_batches = (len(keys) + batch_size - 1) // batch_size
     log(f"batches: wrote {written}, skipped {skipped} (already have results), total {total_batches}, objects {len(keys)}")

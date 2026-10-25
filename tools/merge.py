@@ -20,7 +20,10 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import Taxonomy, base_argparser, load_config, load_taxonomy, log, read_json, read_jsonl, write_json  # noqa: E402
+from common import (  # noqa: E402
+    PROCESS_ROLES, ProcessCatalog, Taxonomy, base_argparser, load_config, load_processes, load_taxonomy, log, read_json,
+    read_jsonl, write_json,
+)
 
 VALID_FLAGS = {"cross-module", "utility", "obsolete-candidate", "test-code", "mixed-fugr", "needs-human",
                "mislabeled-package", "interface", "report-only", "generated", "copy-of-standard", "dead-code"}
@@ -51,6 +54,50 @@ def normalize_secondary(items, tax: Taxonomy, key: str, errors: List[str]) -> Li
     return out[:5]
 
 
+def normalize_process(items, cat: Optional[ProcessCatalog], key: str, errors: List[str]) -> List[dict]:
+    """Optional explicit process assignments from the LLM/review: [{process, role, rationale}]."""
+    out: List[dict] = []
+    if not items or cat is None:
+        return out
+    for it in items:
+        if not isinstance(it, dict):
+            errors.append(f"{key}: process entry is not an object")
+            continue
+        pid = str(it.get("process") or it.get("id") or "").upper()
+        role = str(it.get("role", "direct")).lower()
+        if not cat.valid(pid) or role not in PROCESS_ROLES:
+            errors.append(f"{key}: invalid process assignment {it}")
+            continue
+        if any(o["process"] == pid for o in out):
+            continue
+        out.append({"process": pid, "role": role, "rationale": (it.get("rationale") or "")[:300]})
+    return out[:5]
+
+
+def derive_process(c: dict, cat: Optional[ProcessCatalog], tax: Taxonomy) -> List[dict]:
+    """Final process list: explicit (llm/review) if given, else crosswalk from primary + secondary assignments."""
+    if cat is None:
+        return []
+    explicit = c.get("process") or []
+    if explicit:
+        return [{**e, "label": cat.label(e["process"]), "basis": c["source"]} for e in explicit]
+    out: List[dict] = []
+    seen = set()
+    primary = tax.deepest(c["module"], c.get("submodule"), c.get("area"))
+    for e in cat.defaults_for(tax, primary):
+        if e["process"] not in seen:
+            seen.add(e["process"])
+            out.append({**e, "label": cat.label(e["process"]), "basis": "crosswalk", "rationale": f"crosswalk from {primary}"})
+    for s in c.get("secondary", []):
+        node = tax.deepest(s["module"], s.get("submodule"), s.get("area"))
+        for e in cat.defaults_for(tax, node):
+            if e["process"] not in seen and e["role"] == "direct":
+                seen.add(e["process"])
+                out.append({"process": e["process"], "role": s["role"], "label": cat.label(e["process"]), "basis": "crosswalk",
+                            "rationale": f"crosswalk from secondary {node}"})
+    return out
+
+
 def outcome_for(c: dict, rec: dict) -> str:
     if rec.get("extraction_status") == "failed":
         return "extraction_failed"
@@ -63,7 +110,7 @@ def outcome_for(c: dict, rec: dict) -> str:
     return "classified"
 
 
-def normalize(rec: dict, tax: Taxonomy) -> Tuple[Optional[dict], str]:
+def normalize(rec: dict, tax: Taxonomy, cat: Optional[ProcessCatalog] = None) -> Tuple[Optional[dict], str]:
     """Return (normalized record, error). Accepts module/submodule/area at any depth and fixes the path."""
     key = rec.get("key")
     if not key or not isinstance(key, str):
@@ -95,9 +142,10 @@ def normalize(rec: dict, tax: Taxonomy) -> Tuple[Optional[dict], str]:
     flags = [str(f) for f in (rec.get("flags") or []) if str(f) in VALID_FLAGS]
     sec_errors: List[str] = []
     secondary = normalize_secondary(rec.get("secondary"), tax, key, sec_errors)
+    process = normalize_process(rec.get("process"), cat, key, sec_errors)
     review_state = str(rec.get("review_state", "")).lower()
     out = {"key": key, "module": m, "submodule": s, "area": a, "confidence": round(conf, 2), "purpose": purpose[:300],
-           "rationale": (rec.get("rationale") or "")[:600], "flags": flags, "secondary": secondary,
+           "rationale": (rec.get("rationale") or "")[:600], "flags": flags, "secondary": secondary, "process": process,
            "prompt_version": str(rec.get("prompt_version") or ""), "secondary_errors": sec_errors}
     if review_state in REVIEW_STATES:
         out["review_state"] = review_state
@@ -112,6 +160,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     args = ap.parse_args(argv)
     cfg = load_config(args.config)
     tax = load_taxonomy(cfg.taxonomy_path)
+    cat = load_processes(cfg.taxonomy_path)
     inv = read_jsonl(cfg.inventory_file)
     inv_by_key = {r["key"]: r for r in inv}
     evidence = {r["key"]: r for r in read_jsonl(cfg.evidence_file)} if cfg.evidence_file.exists() else {}
@@ -122,7 +171,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     if cfg.auto_file.exists():
         for rec in read_json(cfg.auto_file)["records"]:
-            norm, err = normalize(rec, tax)
+            norm, err = normalize(rec, tax, cat)
             if norm:
                 norm["source"] = rec.get("source", "heuristic")
                 chosen[norm["key"]] = norm
@@ -142,7 +191,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             continue
         model = data.get("model", "") if isinstance(data, dict) else ""
         for rec in results:
-            norm, err = normalize(rec, tax)
+            norm, err = normalize(rec, tax, cat)
             if not norm:
                 errors.append(f"{p.name}: {err}")
                 stats["llm_invalid"] += 1
@@ -162,7 +211,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.apply_review and cfg.review_patch_file.exists():
         patch = read_json(cfg.review_patch_file)
         for rec in patch if isinstance(patch, list) else patch.get("results", []):
-            norm, err = normalize(rec, tax)
+            norm, err = normalize(rec, tax, cat)
             if not norm or norm["key"] not in inv_by_key:
                 errors.append(f"review_patch: {err or norm['key'] + ' not in inventory'}")
                 continue
@@ -173,6 +222,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             norm["prompt_version"] = prev.get("prompt_version", "")
             norm.setdefault("review_state", "reviewed")
             norm.setdefault("reviewed_by", "abap-reviewer")
+            if not norm.get("process"):
+                norm["process"] = prev.get("process", [])   # keep an explicit LLM process list the reviewer did not touch
             errors.extend(f"review_patch: {e}" for e in norm.pop("secondary_errors"))
             chosen[norm["key"]] = norm
             stats["review_applied"] += 1
@@ -192,9 +243,13 @@ def main(argv: Optional[List[str]] = None) -> int:
         if c["source"].startswith("heuristic"):
             c["prompt_version"] = ""
         outcome = outcome_for(c, rec)
+        process = derive_process(c, cat, tax)
         stats["source:" + c["source"]] += 1
         stats["module:" + c["module"]] += 1
         stats["outcome:" + outcome] += 1
+        for p in process:
+            if p["role"] == "direct":
+                stats["process:" + p["process"].split(".")[0]] += 1
         objects.append({
             "key": k, "system": rec["system"], "company": rec.get("company", ""), "type": rec["type"], "name": rec["name"],
             "package": rec["package"], "package_desc": rec.get("package_desc", ""), "description": rec.get("description", ""),
@@ -203,6 +258,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             "module": c["module"], "submodule": c["submodule"], "area": c["area"], "confidence": c["confidence"],
             "source": c["source"], "model": c.get("model", ""), "purpose": c["purpose"], "rationale": c["rationale"],
             "flags": c["flags"], "secondary": c.get("secondary", []),
+            "process": process,
             "outcome": outcome,
             "review_state": c.get("review_state", "proposed"), "reviewed_by": c.get("reviewed_by", ""),
             "provenance": {"source": c["source"], "model": c.get("model", ""), "batch": c.get("batch", ""),
@@ -218,6 +274,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     out = {
         "generated": generated,
         "taxonomy_version": tax.raw.get("version", ""),
+        "process_catalog": {"version": cat.version, "source": cat.source, "crosswalk_version": cat.crosswalk_version,
+                            "modules": cat.brief(), "groups": list(cat.groups.values())} if cat else None,
         "outcomes": list(OUTCOMES),
         "systems": [{"id": s["id"], "company": s.get("company", "")} for s in cfg.systems],
         "taxonomy": tax.raw["nodes"],

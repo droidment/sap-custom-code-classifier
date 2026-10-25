@@ -71,6 +71,18 @@ id, replace the `azure/` prefix in those files (the deployment names `az-gpt-5.6
 For a cheaper first pass set the classifier to Luna; for a final pass on weak objects set it to Sol and run
 `/classify --min-confidence 0.6`.
 
+## Business process view
+Besides the SAP module, every object gets business-process assignments in the style of SAP's Reference
+Business Architecture (process group > process module, e.g. Source to Pay > Procure to Receive). The catalog in
+`tools/taxonomy/processes.json` is a local alias set written for this project, not an SAP publication; replace
+it with the official snapshot when you have one and keep the ids stable. Most assignments come from the
+module-to-process crosswalk (`tools/taxonomy/crosswalk.json`, basis `crosswalk`) at no LLM cost; the classifier
+sets `process` explicitly only when an object belongs to a different process than its module implies or serves
+several (basis `llm`), and the reviewer can override (basis `review`). Each assignment has a role: direct,
+supporting or context. The explorer can group by process, the CSV has process columns and `tree.md` has a
+process section. Packages for the S/4 target stay organised by module; the process view is for comparing
+capabilities across the companies.
+
 ## How classification works (short)
 `tools/evidence.py` extracts tables, function calls, class references, includes, transactions, message
 classes, infotypes, logical databases, authorization objects and enhancement targets from each object,
@@ -87,7 +99,7 @@ opencode.json  AGENTS.md  migration.config.json
 .opencode/skills/     sap-module-taxonomy, abapgit-layout, classification-rules
 tools/                unchunk, inventory, evidence, prep_batches, merge, overlaps, review_candidates,
                       render_html, render_tree, target_skeleton, status, pending, common
-tools/taxonomy/       nodes.json, rules_*.json  (add rules_custom.json)
+tools/taxonomy/       nodes.json, rules_*.json (add rules_custom.json), processes.json, crosswalk.json
 tools/tests/          make_fixtures.py, test_pipeline.py, fixtures/
 work/  output/        generated (git-ignored)
 ```

@@ -129,6 +129,8 @@ class PipelineTest(unittest.TestCase):
         results = [{"key": k, "module": "FI", "submodule": "FI-GL", "confidence": 0.7, "purpose": "mock", "rationale": "mock",
                     "secondary": [{"module": "MM", "submodule": "MM-PUR", "role": "context", "rationale": "reads EKKO"},
                                   {"module": "XX", "role": "supporting"}]} for k in keys]
+        results[0]["process"] = [{"process": "R2R.CLOSE", "role": "direct", "rationale": "closing report"},
+                                 {"process": "NOPE.X", "role": "direct"}]
         results.append({"key": "SYSA|CLAS|NOPE", "module": "XX", "confidence": 2, "purpose": ""})
         (self.work / "llm" / f"{b['batch_id']}.json").write_text(json.dumps({"batch_id": b["batch_id"], "model": "mock", "results": results}), encoding="utf-8")
         out = run("prep_batches.py")
@@ -149,6 +151,15 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(by[keys[0]]["provenance"]["prompt_version"], "classifier-1.1")
         self.assertEqual(by[keys[0]]["provenance"]["taxonomy_version"], "2026-10-22")
         self.assertTrue(all(o["outcome"] in cls["outcomes"] for o in cls["objects"]))
+        # business process: explicit LLM list wins (invalid id dropped), otherwise crosswalk from module + secondary
+        self.assertEqual([(p["process"], p["role"], p["basis"]) for p in by[keys[0]]["process"]], [("R2R.CLOSE", "direct", "llm")])
+        self.assertEqual(by["SYSA|PROG|ZHR_TS_REPORT"]["process"][0]["process"], "H2R.TIME")
+        self.assertEqual(by["SYSA|PROG|ZHR_TS_REPORT"]["process"][0]["basis"], "crosswalk")
+        self.assertEqual(by["SYSA|CLAS|ZCL_PO_CHECK"]["process"][0]["process"], "S2P.PROCURE")
+        self.assertEqual([p["process"] for p in by["SYSB|PROG|ZFI_POST"]["process"]], ["R2R.LEDGER"])
+        if len(keys) > 1:   # second llm object: crosswalk FI-GL -> R2R.LEDGER plus MM-PUR secondary -> S2P.PROCURE (context)
+            self.assertEqual([(p["process"], p["role"]) for p in by[keys[1]]["process"]], [("R2R.LEDGER", "direct"), ("S2P.PROCURE", "context")])
+        self.assertEqual(cls["process_catalog"]["source"], "local")
         # review patch sets review_state
         (self.work / "review_patch.json").write_text(json.dumps([
             {"key": keys[0], "module": "FI", "submodule": "FI-GL", "confidence": 0.9, "purpose": "reviewed purpose", "rationale": "review: confirmed"}]), encoding="utf-8")
@@ -179,8 +190,10 @@ class PipelineTest(unittest.TestCase):
         tree = (self.out / "tree.md").read_text(encoding="utf-8")
         self.assertIn("## HCM", tree)
         self.assertIn("HCM-PT-TS", tree)
+        self.assertIn("# Custom code by business process", tree)
+        self.assertIn("H2R.TIME", tree)
         csv_head = (self.out / "objects.csv").read_text(encoding="utf-8-sig").splitlines()[0]
-        for col in ("secondary", "outcome", "review_state", "prompt_version", "taxonomy_version"):
+        for col in ("secondary", "process_primary", "process_all", "outcome", "review_state", "prompt_version", "taxonomy_version"):
             self.assertIn(col, csv_head)
         out = run("target_skeleton.py")
         self.assertIn("TARGET_OK", out)

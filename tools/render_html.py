@@ -54,6 +54,8 @@ footer{padding:16px;color:var(--muted);font-size:12px;text-align:center}
 <div class="cards" id="cards"></div>
 <div class="filters">
  <input type="search" id="q" placeholder="search name, description, purpose, package, table…">
+ <select id="view"><option value="module">group by SAP module</option><option value="process">group by business process</option></select>
+ <select id="fProc"><option value="">all processes</option></select>
  <select id="fSys"><option value="">all systems</option></select>
  <select id="fType"><option value="">all object types</option></select>
  <select id="fMod"><option value="">all modules</option></select>
@@ -80,6 +82,9 @@ function fill(sel,vals){vals.forEach(v=>{const o=document.createElement('option'
 fill($('#fSys'),[...new Set(objs.map(o=>o.system))].sort());
 fill($('#fType'),[...new Set(objs.map(o=>o.type))].sort());
 fill($('#fMod'),[...new Set(objs.map(o=>o.module))].sort().map(m=>m));
+const P=D.processes;const PM={};const PG={};if(P){P.modules.forEach(m=>PM[m.id]=m);P.groups.forEach(g=>PG[g.name]=g.id)}
+if(P){const used=[...new Set(objs.flatMap(o=>(o.process||[]).map(p=>p.process)))].sort();used.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v+' '+(PM[v]?PM[v].name:'');$('#fProc').appendChild(o)})}else{$('#view').disabled=true;$('#fProc').disabled=true}
+const plabel=id=>PM[id]?(PM[id].group+' › '+PM[id].name):id;
 function confCls(c){return c>=0.8?'conf-hi':c>=0.6?'conf-mid':'conf-lo'}
 function ovStatus(o){const x=ov[o.key];return x?x.status:'none'}
 function hay(o){return (o.name+' '+(o.description||'')+' '+(o.purpose||'')+' '+o.package+' '+(o.package_desc||'')+' '+(o.tables||[]).join(' ')+' '+(o.children||[]).join(' ')).toLowerCase()}
@@ -96,6 +101,7 @@ function matches(o,f){
  if(f.src&&o.source!==f.src)return false;
  if(f.out&&o.outcome!==f.out)return false;
  if(f.rev&&o.review_state!==f.rev)return false;
+ if(f.proc&&!(o.process||[]).some(p=>p.process===f.proc))return false;
  return true}
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function row(o){
@@ -114,6 +120,7 @@ function detail(o){
  if(o.rationale)s+=`<dt>Rationale</dt><dd>${esc(o.rationale)}</dd>`;
  if(o.flags&&o.flags.length)s+=`<dt>Flags</dt><dd>${o.flags.map(f=>'<span class="chip">'+esc(f)+'</span>').join('')}</dd>`;
  if(o.secondary&&o.secondary.length)s+=`<dt>Also applies to</dt><dd>${o.secondary.map(x=>'<span class="chip">'+esc((x.area||x.submodule||x.module)+' ('+x.role+')')+'</span>'+(x.rationale?' '+esc(x.rationale):'')).join('<br>')}</dd>`;
+ if(o.process&&o.process.length)s+=`<dt>Business process</dt><dd>${o.process.map(p=>'<span class="chip">'+esc(p.process+' '+p.role)+'</span> '+esc(plabel(p.process))+' <span class="sub">('+esc(p.basis||'')+(p.rationale?': '+esc(p.rationale):'')+')</span>').join('<br>')}</dd>`;
  s+=`<dt>Outcome / review</dt><dd>${esc(o.outcome)} · ${esc(o.review_state)}${o.reviewed_by?' by '+esc(o.reviewed_by):''}</dd>`;
  if(o.provenance&&(o.provenance.model||o.provenance.prompt_version))s+=`<dt>Provenance</dt><dd class="mono">${esc(o.provenance.model||'')} ${esc(o.provenance.prompt_version||'')} batch ${esc(o.provenance.batch||'-')} taxonomy ${esc(o.provenance.taxonomy_version||'')}</dd>`;
  if(o.heuristic&&o.heuristic.top&&o.heuristic.top.length)s+=`<dt>Heuristic candidates</dt><dd>${o.heuristic.top.map(t=>esc(t[0])+' ('+t[1]+')').join(', ')}${o.heuristic.module&&o.heuristic.module!==o.module?' <span class="chip ov-similar">differs from final</span>':''}</dd>`;
@@ -127,23 +134,33 @@ function detail(o){
  if(o.files&&o.files.length)s+=`<dt>Files</dt><dd class="mono">${o.files.map(esc).join('<br>')}</dd>`;
  return s+'</dl>'}
 function render(){
- const f={q:$('#q').value.trim().toLowerCase(),sys:$('#fSys').value,type:$('#fType').value,mod:$('#fMod').value,conf:$('#fConf').value,ov:$('#fOv').value,src:$('#fSrc').value,out:$('#fOut').value,rev:$('#fRev').value};
+ const f={q:$('#q').value.trim().toLowerCase(),sys:$('#fSys').value,type:$('#fType').value,mod:$('#fMod').value,conf:$('#fConf').value,ov:$('#fOv').value,src:$('#fSrc').value,out:$('#fOut').value,rev:$('#fRev').value,proc:$('#fProc').value};
  const vis=objs.filter(o=>matches(o,f));
  $('#shown').textContent=vis.length+' of '+objs.length+' objects shown';
- const tree={};vis.forEach(o=>{const m=o.module,s=o.submodule||'_',a=o.area||'_';((tree[m]=tree[m]||{})[s]=tree[m][s]||{})[a]=(tree[m][s][a]||[]);tree[m][s][a].push(o)});
+ const byProcess=$('#view').value==='process'&&P;
+ const tree={};
+ if(byProcess){
+  // group > process module > role ; an object appears once per process assignment
+  vis.forEach(o=>{const ps=(o.process&&o.process.length)?o.process:[{process:'_none',role:'direct'}];ps.forEach(p=>{if(f.proc&&p.process!==f.proc)return;const g=p.process==='_none'?'UNASSIGNED':(PM[p.process]?PG[PM[p.process].group]:'?'),m=p.process,r=p.role;((tree[g]=tree[g]||{})[m]=tree[g][m]||{})[r]=(tree[g][m][r]||[]);tree[g][m][r].push(o)})});
+ } else {
+  vis.forEach(o=>{const m=o.module,s=o.submodule||'_',a=o.area||'_';((tree[m]=tree[m]||{})[s]=tree[m][s]||{})[a]=(tree[m][s][a]||[]);tree[m][s][a].push(o)});
+ }
  const cnt=t=>Object.values(t).reduce((n,v)=>n+(Array.isArray(v)?v.length:cnt(v)),0);
  const anyFilter=Object.values(f).some(Boolean);
+ const gname=id=>{if(!byProcess)return name(id);const g=(P.groups||[]).find(x=>x.id===id);return g?g.name:(id==='UNASSIGNED'?'no process assigned':'')};
+ const sname=id=>byProcess?(PM[id]?PM[id].name:(id==='_none'?'':id)):name(id);
+ const aname=id=>byProcess?'':name(id);
  let h='';
- Object.keys(tree).sort((a,b)=>(a==='UNKNOWN')-(b==='UNKNOWN')||a.localeCompare(b)).forEach(m=>{
-  h+=`<details class="lvl1" ${anyFilter?'open':''}><summary>${esc(m)} <span class="sub">${esc(name(m))}</span><span class="count">${cnt(tree[m])}</span></summary>`;
+ Object.keys(tree).sort((a,b)=>(a==='UNKNOWN'||a==='UNASSIGNED')-(b==='UNKNOWN'||b==='UNASSIGNED')||a.localeCompare(b)).forEach(m=>{
+  h+=`<details class="lvl1" ${anyFilter?'open':''}><summary>${esc(m)} <span class="sub">${esc(gname(m))}</span><span class="count">${cnt(tree[m])}</span></summary>`;
   Object.keys(tree[m]).sort((a,b)=>(a==='_')-(b==='_')||a.localeCompare(b)).forEach(s=>{
    const subOpen=anyFilter?'open':'';
    const wrapS=s!=='_';
-   if(wrapS)h+=`<details class="lvl2" ${subOpen}><summary>${esc(s)} <span class="sub">${esc(name(s))}</span><span class="count">${cnt(tree[m][s])}</span></summary>`;
-   Object.keys(tree[m][s]).sort((a,b)=>(a==='_')-(b==='_')||a.localeCompare(b)).forEach(a=>{
+   if(wrapS)h+=`<details class="lvl2" ${subOpen}><summary>${esc(s)} <span class="sub">${esc(sname(s))}</span><span class="count">${cnt(tree[m][s])}</span></summary>`;
+   Object.keys(tree[m][s]).sort((a,b)=>(a==='_')-(b==='_')||(byProcess?['direct','supporting','context'].indexOf(a)-['direct','supporting','context'].indexOf(b):a.localeCompare(b))).forEach(a=>{
     const items=tree[m][s][a].sort((x,y)=>x.type.localeCompare(y.type)||x.name.localeCompare(y.name)||x.system.localeCompare(y.system));
     const wrapA=a!=='_';
-    if(wrapA)h+=`<details class="lvl3" ${subOpen}><summary>${esc(a)} <span class="sub">${esc(name(a))}</span><span class="count">${items.length}</span></summary>`;
+    if(wrapA)h+=`<details class="lvl3" ${subOpen||byProcess?'open':''}><summary>${esc(byProcess?'role: '+a:a)} <span class="sub">${esc(aname(a))}</span><span class="count">${items.length}</span></summary>`;
     h+=`<table><thead><tr><th>Type</th><th>Object</th><th>Purpose</th><th>System / package</th><th>Conf.</th></tr></thead><tbody>${items.map(row).join('')}</tbody></table>`;
     if(wrapA)h+='</details>';
    });
@@ -164,7 +181,7 @@ function cards(){
  $('#cards').innerHTML+=Object.entries(bySys).map(([k,v])=>`<div class="card"><b>${v}</b><span>${esc(k)}</span></div>`).join('');
 }
 document.addEventListener('click',e=>{const tr=e.target.closest('tr.obj');if(!tr)return;const d=document.querySelector(`tr.detailrow[data-d="${tr.dataset.k.replace(/"/g,'\\"')}"]`);if(d)d.classList.toggle('hidden')});
-['#q','#fSys','#fType','#fMod','#fConf','#fOv','#fSrc','#fOut','#fRev'].forEach(s=>$(s).addEventListener('input',render));
+['#q','#view','#fProc','#fSys','#fType','#fMod','#fConf','#fOv','#fSrc','#fOut','#fRev'].forEach(s=>$(s).addEventListener('input',render));
 $('#expand').onclick=()=>document.querySelectorAll('details').forEach(d=>d.open=true);
 $('#collapse').onclick=()=>document.querySelectorAll('details').forEach(d=>d.open=false);
 $('#theme').onclick=()=>{const r=document.documentElement;const cur=r.getAttribute('data-theme');r.setAttribute('data-theme',cur==='dark'?'light':'dark')};
@@ -193,7 +210,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             "package_desc": o.get("package_desc", ""), "description": o.get("description", ""), "purpose": o.get("purpose", ""),
             "module": o["module"], "submodule": o.get("submodule"), "area": o.get("area"), "confidence": o.get("confidence", 0),
             "source": o.get("source", ""), "model": o.get("model", ""), "rationale": o.get("rationale", ""), "flags": o.get("flags", []),
-            "secondary": o.get("secondary", []), "outcome": o.get("outcome", "classified"),
+            "secondary": o.get("secondary", []), "process": o.get("process", []), "outcome": o.get("outcome", "classified"),
             "review_state": o.get("review_state", "proposed"), "reviewed_by": o.get("reviewed_by", ""),
             "provenance": o.get("provenance", {}),
             "heuristic": {"module": (o.get("heuristic") or {}).get("module"), "top": (o.get("heuristic") or {}).get("top", [])},
@@ -204,6 +221,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         })
     data = {"generated": cls["generated"], "systems": cls["systems"],
             "taxonomy": [{"id": n["id"], "name": n["name"], "parent": n.get("parent")} for n in tax.raw["nodes"]],
+            "processes": cls.get("process_catalog") or None,
             "objects": objects, "overlaps": overlaps}
     blob = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
     systems = ", ".join(f"{s['id']} ({s['company']})" if s.get("company") else s["id"] for s in cls["systems"])
