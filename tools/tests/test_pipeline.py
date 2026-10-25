@@ -149,7 +149,8 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(by[keys[0]]["review_state"], "proposed")
         self.assertEqual(by[keys[0]]["provenance"]["model"], "mock")
         self.assertEqual(by[keys[0]]["provenance"]["prompt_version"], "classifier-1.1")
-        self.assertEqual(by[keys[0]]["provenance"]["taxonomy_version"], "2026-10-22")
+        nodes_version = json.loads((TOOLS / "taxonomy" / "nodes.json").read_text(encoding="utf-8"))["version"]
+        self.assertEqual(by[keys[0]]["provenance"]["taxonomy_version"], nodes_version)
         self.assertTrue(all(o["outcome"] in cls["outcomes"] for o in cls["objects"]))
         # business process: explicit LLM list wins (invalid id dropped), otherwise crosswalk from module + secondary
         self.assertEqual([(p["process"], p["role"], p["basis"]) for p in by[keys[0]]["process"]], [("R2R.CLOSE", "direct", "llm")])

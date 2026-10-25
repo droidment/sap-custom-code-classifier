@@ -8,7 +8,7 @@
 
 ## Task
 
-Write the `tools/taxonomy/rules_*.json` files (one per module family: hcm, fi_co, fi_extra, co, mm, lo, sd, sd_le, pp, pm_qm_ps, bc, bc_ca) following section 5.2 exactly: short, real, conflict-free lists. Every node of section 5.1 except UNKNOWN gets at least one rule. After writing them, run the cross-branch conflict check described in the acceptance section and remove conflicts.
+Write the `tools/taxonomy/rules_*.json` files (one per module family: hcm, fi_co, fi_extra, co, mm, lo, sd, sd_le, pp, pm_qm_ps, bc, bc_ca, and) following section 5.2 exactly: short, real, conflict-free lists. Every node of section 5.1 except UNKNOWN gets at least one rule. After writing them, run the cross-branch conflict check described in the acceptance section and remove conflicts.
 
 ## Specification
 

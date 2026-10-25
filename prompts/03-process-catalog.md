@@ -19,7 +19,17 @@ PROCURE, SERVICES, INVOICE, SUPPLIER), P2F Plan to Fulfill (PLAN, PRODUCE, INSPE
 TRANSPORT, PRODUCT), R2R Record to Report (LEDGER, CLOSE, COST, PRODUCTCOST, PROFIT, TAX, CASH), H2R Recruit
 to Retire (HIRE, ADMIN, TIME, PAY, DEVELOP, REWARD, TRAVEL), A2D Acquire to Decommission (ASSET, MAINTAIN),
 I2M Idea to Market (DESIGN, PROJECT), GOV Govern Enterprise Data (PARTNER, COMMON), TEC Technology and
-Integration (INTEGRATE, WORKFLOW, OUTPUT, SECURE, OPERATE, REPORT); module ids are `GROUP.NAME`.
+Integration (INTEGRATE, WORKFLOW, OUTPUT, SECURE, OPERATE, REPORT), AND Aerospace and Defense solution
+facets (GPD Group/Peg/Distribute, PROGRAM project manufacturing, GOVCON government contract accounting,
+EFFECT configuration control and effectivity, MRO maintain/repair/overhaul, PEO S/4 production engineering
+and operations as a target concept); 10 groups, 50 modules; module ids are `GROUP.NAME`.
+A&D rules live in `rules_and.json` (PS-GPD: PEG_/GPD_ prefixes, PEG/GRM/DIS0 tcodes, pegging/grouping/
+distribution keywords; CO-GOV: AD01*/DP90 resource-related billing, cost-plus/progress billing/earned
+value/DCAA keywords; PM-MRO: ADPM*/ADSUBCON*/ADFLT* objects, rotable/overhaul/flight-log keywords; LO-EFF:
+EFFV*/AENR/AEOI change management, effectivity/as-built keywords) and are explicitly marked as unverified
+against a real system. Crosswalk: PS-GPD -> AND.GPD (+ AND.PROGRAM supporting, I2M.PROJECT context);
+CO-GOV -> AND.GOVCON (+ R2R.COST supporting, L2C.INVOICE context); PM-MRO -> AND.MRO (+ A2D.MAINTAIN
+supporting, L2C.SERVICE context); LO-EFF -> AND.EFFECT (+ P2F.PRODUCT supporting, I2M.DESIGN context).
 `tools/taxonomy/crosswalk.json`: `{version, map: {"<taxonomy node>": [{process, role}]}}` for every module
 and the submodules whose process differs from the module's (FI-AP -> S2P.INVOICE direct + R2R.LEDGER
 supporting; FI-AR -> L2C.INVOICE; FI-AA -> A2D.ASSET; FI-TV -> H2R.TRAVEL; CO-PC -> R2R.PRODUCTCOST; CO-PA ->
@@ -40,4 +50,4 @@ object; the classifier sets `process` only to override. tree.md gets a "by busin
 
 ## Acceptance check
 
-`py -c "import sys;sys.path.insert(0,'tools');from common import load_processes,load_taxonomy;c=load_processes('tools/taxonomy');t=load_taxonomy('tools/taxonomy');print(len(c.groups),len(c.modules),c.defaults_for(t,'HCM-PT-TS'),c.defaults_for(t,'FI-AP'))"` prints 9 groups, 38 modules, `[{'process': 'H2R.TIME', 'role': 'direct'}]` and the two FI-AP entries. Every top-level taxonomy node except UNKNOWN must have a crosswalk entry (check with a loop).
+`py -c "import sys;sys.path.insert(0,'tools');from common import load_processes,load_taxonomy;c=load_processes('tools/taxonomy');t=load_taxonomy('tools/taxonomy');print(len(c.groups),len(c.modules),c.defaults_for(t,'HCM-PT-TS'),c.defaults_for(t,'FI-AP'))"` prints 10 groups, 50 modules, `[{'process': 'H2R.TIME', 'role': 'direct'}]` and the two FI-AP entries. Every top-level taxonomy node except UNKNOWN must have a crosswalk entry (check with a loop).

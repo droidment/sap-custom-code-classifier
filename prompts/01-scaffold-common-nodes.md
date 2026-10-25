@@ -8,7 +8,7 @@
 
 ## Task
 
-Create the folder layout, `.gitignore`, `migration.config.json` (section 3 shape, placeholder roots), `tools/common.py` exactly as specified in section 4 (including the `ProcessCatalog` loader described in section 5.3, which may stay unused until step 03), and `tools/taxonomy/nodes.json` with the weights and all 102 nodes of section 5.1 (add `"version": "<today>"`).
+Create the folder layout, `.gitignore`, `migration.config.json` (section 3 shape, placeholder roots), `tools/common.py` exactly as specified in section 4 (including the `ProcessCatalog` loader described in section 5.3, which may stay unused until step 03), and `tools/taxonomy/nodes.json` with the weights and all 106 nodes of section 5.1 (add `"version": "<today>"`).
 
 ## Specification
 
@@ -106,8 +106,11 @@ Modules and children (id - name):
   dev tools; BC-BW extractors; BC-UI ALV/Dynpro/Web Dynpro without business context.
 - CA Cross-application: CA-BP business partner; CA-ADR addresses; CA-DMS documents; CA-CL classification;
   CA-GEN change docs, number ranges, texts, units, currencies.
+- Aerospace & Defense facets as submodules of their base module (4 nodes, total 106): PS-GPD Grouping,
+  Pegging and Distribution; CO-GOV Government Contract Accounting (cost-plus, progress billing, earned
+  value); PM-MRO Maintenance, Repair and Overhaul; LO-EFF Configuration Control and Effectivity.
 - UNKNOWN.
 
 ## Acceptance check
 
-`py -c "import sys;sys.path.insert(0,'tools');from common import load_taxonomy;t=load_taxonomy('tools/taxonomy');print(len(t.nodes),t.top_level)"` prints 102 and the 16 top-level ids (HCM, FI, CO, MM, LO, SD, LE, PP, PM, QM, PS, FSCM, BC, CA, UNKNOWN plus none other). It must fail loudly on a duplicate id or unknown parent.
+`py -c "import sys;sys.path.insert(0,'tools');from common import load_taxonomy;t=load_taxonomy('tools/taxonomy');print(len(t.nodes),t.top_level)"` prints 106 and the 16 top-level ids (HCM, FI, CO, MM, LO, SD, LE, PP, PM, QM, PS, FSCM, BC, CA, UNKNOWN plus none other). It must fail loudly on a duplicate id or unknown parent.

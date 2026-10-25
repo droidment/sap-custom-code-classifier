@@ -1,87 +1,575 @@
 {
-  "_comment": "Module taxonomy node -> default business-process assignments. The most specific node that has an entry wins (area, then submodule, then module). role: direct = the object implements this process; supporting = it does work for it as well; context = it only reads that process's data. Every assignment derived from this file carries basis 'crosswalk'. The classifier or reviewer can override per object.",
-  "version": "local-2026-10-25",
-  "map": {
-    "HCM":        [{"process": "H2R.ADMIN", "role": "direct"}],
-    "HCM-PA":     [{"process": "H2R.ADMIN", "role": "direct"}],
-    "HCM-OM":     [{"process": "H2R.ADMIN", "role": "direct"}],
-    "HCM-ESS":    [{"process": "H2R.ADMIN", "role": "direct"}],
-    "HCM-WF":     [{"process": "H2R.ADMIN", "role": "direct"}],
-    "HCM-WF-LEAVE": [{"process": "H2R.TIME", "role": "direct"}, {"process": "H2R.ADMIN", "role": "supporting"}],
-    "HCM-PT":     [{"process": "H2R.TIME", "role": "direct"}],
-    "HCM-PY":     [{"process": "H2R.PAY", "role": "direct"}],
-    "HCM-PY-POST": [{"process": "H2R.PAY", "role": "direct"}, {"process": "R2R.LEDGER", "role": "supporting"}],
-    "HCM-PD":     [{"process": "H2R.DEVELOP", "role": "direct"}],
-    "HCM-PE":     [{"process": "H2R.DEVELOP", "role": "direct"}],
-    "HCM-BN":     [{"process": "H2R.REWARD", "role": "direct"}],
-    "HCM-CM":     [{"process": "H2R.REWARD", "role": "direct"}],
-    "HCM-RC":     [{"process": "H2R.HIRE", "role": "direct"}],
-
-    "FI":         [{"process": "R2R.LEDGER", "role": "direct"}],
-    "FI-GL":      [{"process": "R2R.LEDGER", "role": "direct"}],
-    "FI-SL":      [{"process": "R2R.LEDGER", "role": "direct"}],
-    "FI-CLS":     [{"process": "R2R.CLOSE", "role": "direct"}],
-    "FI-TX":      [{"process": "R2R.TAX", "role": "direct"}],
-    "FI-BL":      [{"process": "R2R.CASH", "role": "direct"}],
-    "FI-AP":      [{"process": "S2P.INVOICE", "role": "direct"}, {"process": "R2R.LEDGER", "role": "supporting"}],
-    "FI-AR":      [{"process": "L2C.INVOICE", "role": "direct"}, {"process": "R2R.LEDGER", "role": "supporting"}],
-    "FI-AA":      [{"process": "A2D.ASSET", "role": "direct"}, {"process": "R2R.LEDGER", "role": "supporting"}],
-    "FI-TV":      [{"process": "H2R.TRAVEL", "role": "direct"}, {"process": "S2P.INVOICE", "role": "context"}],
-
-    "CO":         [{"process": "R2R.COST", "role": "direct"}],
-    "CO-OM":      [{"process": "R2R.COST", "role": "direct"}],
-    "CO-PC":      [{"process": "R2R.PRODUCTCOST", "role": "direct"}, {"process": "P2F.PRODUCE", "role": "context"}],
-    "CO-PA":      [{"process": "R2R.PROFIT", "role": "direct"}, {"process": "L2C.INVOICE", "role": "context"}],
-    "CO-PCA":     [{"process": "R2R.PROFIT", "role": "direct"}],
-    "FSCM-CR":    [{"process": "L2C.INVOICE", "role": "direct"}, {"process": "L2C.ORDER", "role": "supporting"}],
-    "FSCM-COL":   [{"process": "L2C.INVOICE", "role": "direct"}],
-
-    "MM":         [{"process": "S2P.PROCURE", "role": "direct"}],
-    "MM-PUR":     [{"process": "S2P.PROCURE", "role": "direct"}],
-    "MM-PUR-CON": [{"process": "S2P.SOURCE", "role": "direct"}],
-    "MM-SRV":     [{"process": "S2P.SERVICES", "role": "direct"}],
-    "MM-IV":      [{"process": "S2P.INVOICE", "role": "direct"}],
-    "MM-MD":      [{"process": "S2P.SUPPLIER", "role": "direct"}],
-    "MM-IM":      [{"process": "P2F.INVENTORY", "role": "direct"}],
-    "LO":         [{"process": "P2F.PRODUCT", "role": "direct"}],
-    "LO-MD":      [{"process": "P2F.PRODUCT", "role": "direct"}],
-    "LO-VC":      [{"process": "P2F.PRODUCT", "role": "direct"}, {"process": "L2C.ORDER", "role": "supporting"}],
-    "LO-BM":      [{"process": "P2F.INVENTORY", "role": "direct"}],
-    "LO-HU":      [{"process": "L2C.DELIVER", "role": "direct"}, {"process": "P2F.WAREHOUSE", "role": "supporting"}],
-
-    "SD":         [{"process": "L2C.ORDER", "role": "direct"}],
-    "SD-SLS":     [{"process": "L2C.ORDER", "role": "direct"}],
-    "SD-EDI":     [{"process": "L2C.ORDER", "role": "direct"}, {"process": "TEC.INTEGRATE", "role": "supporting"}],
-    "SD-BIL":     [{"process": "L2C.INVOICE", "role": "direct"}],
-    "SD-BF":      [{"process": "L2C.ORDER", "role": "direct"}],
-    "SD-BF-PR":   [{"process": "L2C.QUOTE", "role": "direct"}, {"process": "L2C.ORDER", "role": "supporting"}],
-    "SD-BF-OUT":  [{"process": "L2C.ORDER", "role": "direct"}, {"process": "TEC.OUTPUT", "role": "supporting"}],
-    "SD-MD":      [{"process": "L2C.CUSTOMER", "role": "direct"}],
-    "LE":         [{"process": "L2C.DELIVER", "role": "direct"}],
-    "LE-SHP":     [{"process": "L2C.DELIVER", "role": "direct"}],
-    "LE-WM":      [{"process": "P2F.WAREHOUSE", "role": "direct"}],
-    "LE-TRA":     [{"process": "P2F.TRANSPORT", "role": "direct"}],
-
-    "PP":         [{"process": "P2F.PRODUCE", "role": "direct"}],
-    "PP-MRP":     [{"process": "P2F.PLAN", "role": "direct"}],
-    "PP-BD":      [{"process": "P2F.PRODUCE", "role": "direct"}, {"process": "I2M.DESIGN", "role": "context"}],
-    "PM":         [{"process": "A2D.MAINTAIN", "role": "direct"}],
-    "QM":         [{"process": "P2F.INSPECT", "role": "direct"}],
-    "PS":         [{"process": "I2M.PROJECT", "role": "direct"}],
-    "PS-COS":     [{"process": "I2M.PROJECT", "role": "direct"}, {"process": "R2R.COST", "role": "supporting"}],
-
-    "BC":         [{"process": "TEC.OPERATE", "role": "direct"}],
-    "BC-WF":      [{"process": "TEC.WORKFLOW", "role": "direct"}],
-    "BC-ALE":     [{"process": "TEC.INTEGRATE", "role": "direct"}],
-    "BC-ESI":     [{"process": "TEC.INTEGRATE", "role": "direct"}],
-    "BC-SEC":     [{"process": "TEC.SECURE", "role": "direct"}],
-    "BC-SRV":     [{"process": "TEC.OUTPUT", "role": "direct"}],
-    "BC-BW":      [{"process": "TEC.REPORT", "role": "direct"}],
-    "CA":         [{"process": "GOV.COMMON", "role": "direct"}],
-    "CA-BP":      [{"process": "GOV.PARTNER", "role": "direct"}],
-    "CA-ADR":     [{"process": "GOV.PARTNER", "role": "direct"}],
-    "CA-DMS":     [{"process": "I2M.DESIGN", "role": "direct"}],
-    "CA-CL":      [{"process": "I2M.DESIGN", "role": "direct"}, {"process": "P2F.PRODUCT", "role": "supporting"}],
-    "UNKNOWN":    []
-  }
+ "_comment": "Module taxonomy node -> default business-process assignments. The most specific node that has an entry wins (area, then submodule, then module). role: direct = the object implements this process; supporting = it does work for it as well; context = it only reads that process's data. Every assignment derived from this file carries basis 'crosswalk'. The classifier or reviewer can override per object.",
+ "version": "local-2026-10-25b",
+ "map": {
+  "HCM": [
+   {
+    "process": "H2R.ADMIN",
+    "role": "direct"
+   }
+  ],
+  "HCM-PA": [
+   {
+    "process": "H2R.ADMIN",
+    "role": "direct"
+   }
+  ],
+  "HCM-OM": [
+   {
+    "process": "H2R.ADMIN",
+    "role": "direct"
+   }
+  ],
+  "HCM-ESS": [
+   {
+    "process": "H2R.ADMIN",
+    "role": "direct"
+   }
+  ],
+  "HCM-WF": [
+   {
+    "process": "H2R.ADMIN",
+    "role": "direct"
+   }
+  ],
+  "HCM-WF-LEAVE": [
+   {
+    "process": "H2R.TIME",
+    "role": "direct"
+   },
+   {
+    "process": "H2R.ADMIN",
+    "role": "supporting"
+   }
+  ],
+  "HCM-PT": [
+   {
+    "process": "H2R.TIME",
+    "role": "direct"
+   }
+  ],
+  "HCM-PY": [
+   {
+    "process": "H2R.PAY",
+    "role": "direct"
+   }
+  ],
+  "HCM-PY-POST": [
+   {
+    "process": "H2R.PAY",
+    "role": "direct"
+   },
+   {
+    "process": "R2R.LEDGER",
+    "role": "supporting"
+   }
+  ],
+  "HCM-PD": [
+   {
+    "process": "H2R.DEVELOP",
+    "role": "direct"
+   }
+  ],
+  "HCM-PE": [
+   {
+    "process": "H2R.DEVELOP",
+    "role": "direct"
+   }
+  ],
+  "HCM-BN": [
+   {
+    "process": "H2R.REWARD",
+    "role": "direct"
+   }
+  ],
+  "HCM-CM": [
+   {
+    "process": "H2R.REWARD",
+    "role": "direct"
+   }
+  ],
+  "HCM-RC": [
+   {
+    "process": "H2R.HIRE",
+    "role": "direct"
+   }
+  ],
+  "FI": [
+   {
+    "process": "R2R.LEDGER",
+    "role": "direct"
+   }
+  ],
+  "FI-GL": [
+   {
+    "process": "R2R.LEDGER",
+    "role": "direct"
+   }
+  ],
+  "FI-SL": [
+   {
+    "process": "R2R.LEDGER",
+    "role": "direct"
+   }
+  ],
+  "FI-CLS": [
+   {
+    "process": "R2R.CLOSE",
+    "role": "direct"
+   }
+  ],
+  "FI-TX": [
+   {
+    "process": "R2R.TAX",
+    "role": "direct"
+   }
+  ],
+  "FI-BL": [
+   {
+    "process": "R2R.CASH",
+    "role": "direct"
+   }
+  ],
+  "FI-AP": [
+   {
+    "process": "S2P.INVOICE",
+    "role": "direct"
+   },
+   {
+    "process": "R2R.LEDGER",
+    "role": "supporting"
+   }
+  ],
+  "FI-AR": [
+   {
+    "process": "L2C.INVOICE",
+    "role": "direct"
+   },
+   {
+    "process": "R2R.LEDGER",
+    "role": "supporting"
+   }
+  ],
+  "FI-AA": [
+   {
+    "process": "A2D.ASSET",
+    "role": "direct"
+   },
+   {
+    "process": "R2R.LEDGER",
+    "role": "supporting"
+   }
+  ],
+  "FI-TV": [
+   {
+    "process": "H2R.TRAVEL",
+    "role": "direct"
+   },
+   {
+    "process": "S2P.INVOICE",
+    "role": "context"
+   }
+  ],
+  "CO": [
+   {
+    "process": "R2R.COST",
+    "role": "direct"
+   }
+  ],
+  "CO-OM": [
+   {
+    "process": "R2R.COST",
+    "role": "direct"
+   }
+  ],
+  "CO-PC": [
+   {
+    "process": "R2R.PRODUCTCOST",
+    "role": "direct"
+   },
+   {
+    "process": "P2F.PRODUCE",
+    "role": "context"
+   }
+  ],
+  "CO-PA": [
+   {
+    "process": "R2R.PROFIT",
+    "role": "direct"
+   },
+   {
+    "process": "L2C.INVOICE",
+    "role": "context"
+   }
+  ],
+  "CO-PCA": [
+   {
+    "process": "R2R.PROFIT",
+    "role": "direct"
+   }
+  ],
+  "FSCM-CR": [
+   {
+    "process": "L2C.INVOICE",
+    "role": "direct"
+   },
+   {
+    "process": "L2C.ORDER",
+    "role": "supporting"
+   }
+  ],
+  "FSCM-COL": [
+   {
+    "process": "L2C.INVOICE",
+    "role": "direct"
+   }
+  ],
+  "MM": [
+   {
+    "process": "S2P.PROCURE",
+    "role": "direct"
+   }
+  ],
+  "MM-PUR": [
+   {
+    "process": "S2P.PROCURE",
+    "role": "direct"
+   }
+  ],
+  "MM-PUR-CON": [
+   {
+    "process": "S2P.SOURCE",
+    "role": "direct"
+   }
+  ],
+  "MM-SRV": [
+   {
+    "process": "S2P.SERVICES",
+    "role": "direct"
+   }
+  ],
+  "MM-IV": [
+   {
+    "process": "S2P.INVOICE",
+    "role": "direct"
+   }
+  ],
+  "MM-MD": [
+   {
+    "process": "S2P.SUPPLIER",
+    "role": "direct"
+   }
+  ],
+  "MM-IM": [
+   {
+    "process": "P2F.INVENTORY",
+    "role": "direct"
+   }
+  ],
+  "LO": [
+   {
+    "process": "P2F.PRODUCT",
+    "role": "direct"
+   }
+  ],
+  "LO-MD": [
+   {
+    "process": "P2F.PRODUCT",
+    "role": "direct"
+   }
+  ],
+  "LO-VC": [
+   {
+    "process": "P2F.PRODUCT",
+    "role": "direct"
+   },
+   {
+    "process": "L2C.ORDER",
+    "role": "supporting"
+   }
+  ],
+  "LO-BM": [
+   {
+    "process": "P2F.INVENTORY",
+    "role": "direct"
+   }
+  ],
+  "LO-HU": [
+   {
+    "process": "L2C.DELIVER",
+    "role": "direct"
+   },
+   {
+    "process": "P2F.WAREHOUSE",
+    "role": "supporting"
+   }
+  ],
+  "SD": [
+   {
+    "process": "L2C.ORDER",
+    "role": "direct"
+   }
+  ],
+  "SD-SLS": [
+   {
+    "process": "L2C.ORDER",
+    "role": "direct"
+   }
+  ],
+  "SD-EDI": [
+   {
+    "process": "L2C.ORDER",
+    "role": "direct"
+   },
+   {
+    "process": "TEC.INTEGRATE",
+    "role": "supporting"
+   }
+  ],
+  "SD-BIL": [
+   {
+    "process": "L2C.INVOICE",
+    "role": "direct"
+   }
+  ],
+  "SD-BF": [
+   {
+    "process": "L2C.ORDER",
+    "role": "direct"
+   }
+  ],
+  "SD-BF-PR": [
+   {
+    "process": "L2C.QUOTE",
+    "role": "direct"
+   },
+   {
+    "process": "L2C.ORDER",
+    "role": "supporting"
+   }
+  ],
+  "SD-BF-OUT": [
+   {
+    "process": "L2C.ORDER",
+    "role": "direct"
+   },
+   {
+    "process": "TEC.OUTPUT",
+    "role": "supporting"
+   }
+  ],
+  "SD-MD": [
+   {
+    "process": "L2C.CUSTOMER",
+    "role": "direct"
+   }
+  ],
+  "LE": [
+   {
+    "process": "L2C.DELIVER",
+    "role": "direct"
+   }
+  ],
+  "LE-SHP": [
+   {
+    "process": "L2C.DELIVER",
+    "role": "direct"
+   }
+  ],
+  "LE-WM": [
+   {
+    "process": "P2F.WAREHOUSE",
+    "role": "direct"
+   }
+  ],
+  "LE-TRA": [
+   {
+    "process": "P2F.TRANSPORT",
+    "role": "direct"
+   }
+  ],
+  "PP": [
+   {
+    "process": "P2F.PRODUCE",
+    "role": "direct"
+   }
+  ],
+  "PP-MRP": [
+   {
+    "process": "P2F.PLAN",
+    "role": "direct"
+   }
+  ],
+  "PP-BD": [
+   {
+    "process": "P2F.PRODUCE",
+    "role": "direct"
+   },
+   {
+    "process": "I2M.DESIGN",
+    "role": "context"
+   }
+  ],
+  "PM": [
+   {
+    "process": "A2D.MAINTAIN",
+    "role": "direct"
+   }
+  ],
+  "QM": [
+   {
+    "process": "P2F.INSPECT",
+    "role": "direct"
+   }
+  ],
+  "PS": [
+   {
+    "process": "I2M.PROJECT",
+    "role": "direct"
+   }
+  ],
+  "PS-COS": [
+   {
+    "process": "I2M.PROJECT",
+    "role": "direct"
+   },
+   {
+    "process": "R2R.COST",
+    "role": "supporting"
+   }
+  ],
+  "BC": [
+   {
+    "process": "TEC.OPERATE",
+    "role": "direct"
+   }
+  ],
+  "BC-WF": [
+   {
+    "process": "TEC.WORKFLOW",
+    "role": "direct"
+   }
+  ],
+  "BC-ALE": [
+   {
+    "process": "TEC.INTEGRATE",
+    "role": "direct"
+   }
+  ],
+  "BC-ESI": [
+   {
+    "process": "TEC.INTEGRATE",
+    "role": "direct"
+   }
+  ],
+  "BC-SEC": [
+   {
+    "process": "TEC.SECURE",
+    "role": "direct"
+   }
+  ],
+  "BC-SRV": [
+   {
+    "process": "TEC.OUTPUT",
+    "role": "direct"
+   }
+  ],
+  "BC-BW": [
+   {
+    "process": "TEC.REPORT",
+    "role": "direct"
+   }
+  ],
+  "CA": [
+   {
+    "process": "GOV.COMMON",
+    "role": "direct"
+   }
+  ],
+  "CA-BP": [
+   {
+    "process": "GOV.PARTNER",
+    "role": "direct"
+   }
+  ],
+  "CA-ADR": [
+   {
+    "process": "GOV.PARTNER",
+    "role": "direct"
+   }
+  ],
+  "CA-DMS": [
+   {
+    "process": "I2M.DESIGN",
+    "role": "direct"
+   }
+  ],
+  "CA-CL": [
+   {
+    "process": "I2M.DESIGN",
+    "role": "direct"
+   },
+   {
+    "process": "P2F.PRODUCT",
+    "role": "supporting"
+   }
+  ],
+  "UNKNOWN": [],
+  "PS-GPD": [
+   {
+    "process": "AND.GPD",
+    "role": "direct"
+   },
+   {
+    "process": "AND.PROGRAM",
+    "role": "supporting"
+   },
+   {
+    "process": "I2M.PROJECT",
+    "role": "context"
+   }
+  ],
+  "CO-GOV": [
+   {
+    "process": "AND.GOVCON",
+    "role": "direct"
+   },
+   {
+    "process": "R2R.COST",
+    "role": "supporting"
+   },
+   {
+    "process": "L2C.INVOICE",
+    "role": "context"
+   }
+  ],
+  "PM-MRO": [
+   {
+    "process": "AND.MRO",
+    "role": "direct"
+   },
+   {
+    "process": "A2D.MAINTAIN",
+    "role": "supporting"
+   },
+   {
+    "process": "L2C.SERVICE",
+    "role": "context"
+   }
+  ],
+  "LO-EFF": [
+   {
+    "process": "AND.EFFECT",
+    "role": "direct"
+   },
+   {
+    "process": "P2F.PRODUCT",
+    "role": "supporting"
+   },
+   {
+    "process": "I2M.DESIGN",
+    "role": "context"
+   }
+  ]
+ }
 }

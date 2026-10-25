@@ -1,6 +1,6 @@
 {
  "_comment": "SAP module taxonomy for ECC 6.0 custom code. ids follow SAP application-component style. Level 0 = module, level 1 = submodule, level 2 = area. Rules live in rules_*.json next to this file; add rules_custom.json for your own Z-tables, naming conventions and keywords. Weights are per signal kind; a rule may carry its own 'weight' multiplier.",
- "version": "2026-10-22",
+ "version": "2026-10-25",
  "weights": {
   "table": 5,
   "table_prefix": 4,
@@ -196,6 +196,11 @@
    "parent": "CO"
   },
   {
+   "id": "CO-GOV",
+   "name": "Government Contract Accounting (cost-plus, progress billing, EVM)",
+   "parent": "CO"
+  },
+  {
    "id": "MM",
    "name": "Materials Management"
   },
@@ -266,6 +271,11 @@
   {
    "id": "LO-HU",
    "name": "Handling Units",
+   "parent": "LO"
+  },
+  {
+   "id": "LO-EFF",
+   "name": "Configuration Control and Effectivity (A&D)",
    "parent": "LO"
   },
   {
@@ -375,6 +385,11 @@
    "parent": "PM"
   },
   {
+   "id": "PM-MRO",
+   "name": "Maintenance, Repair and Overhaul (A&D)",
+   "parent": "PM"
+  },
+  {
    "id": "QM",
    "name": "Quality Management"
   },
@@ -405,6 +420,11 @@
   {
    "id": "PS-COS",
    "name": "Project Costs & Settlement",
+   "parent": "PS"
+  },
+  {
+   "id": "PS-GPD",
+   "name": "Grouping, Pegging and Distribution (A&D)",
    "parent": "PS"
   },
   {

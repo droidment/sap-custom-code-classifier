@@ -22,7 +22,14 @@ Level 0 = module, level 1 = submodule, level 2 = area. A classification is a val
 | FSCM | Credit (UKM*), collections/dispute (UDM*/FDM*) | |
 | BC | Technical | BC-WF workflow tech, BC-ALE IDoc, BC-ESI interfaces/OData/RFC, BC-SEC authorizations, BC-SRV output (FORM/MAIL/FILE), BC-ABA utilities (+JOB), BC-CTS dev tools, BC-BW extractors, BC-UI ALV/Dynpro-only code |
 | CA | Cross-application business | CA-BP business partner, CA-ADR addresses, CA-DMS documents, CA-CL classification, CA-GEN change docs / number ranges / texts / units / currencies |
+| A&D nodes | Aerospace & Defense add-on facets, placed under their base module | PS-GPD grouping/pegging/distribution (PEG*, GPD*, pegging run, borrow/payback); CO-GOV government contract accounting (DP90/RRB, AD01 DIP profiles, cost-plus, progress billing, earned value, DCAA); PM-MRO maintenance/repair/overhaul (ADPM*, ADSUBCON*, ADFLT*, rotables, flight log, airworthiness); LO-EFF configuration control & effectivity (EFFV*, AENR/AEOI change management, serial/parameter effectivity, as-built) |
 | UNKNOWN | No usable evidence | confidence must be <= 0.3 |
+
+A&D placement: GPD code that pegs supply to project demand is PS-GPD even when it reads MM/PP tables; a
+plain project cost report stays PS-COS. Resource-related billing on a government contract is CO-GOV, not
+SD-BIL. Repair of customer equipment with rotables is PM-MRO; maintaining the company's own machines stays
+PM-WOC. The process catalog mirrors these as the AND.* modules (AND.GPD, AND.GOVCON, AND.MRO, AND.EFFECT,
+AND.PROGRAM, AND.PEO); AND.PEO is an S/4 target concept and has no ECC rules.
 
 ## Placement rules for ambiguous code
 - HR approval workflows (leave, time, PCR) -> HCM-WF, not BC-WF. Generic workflow tooling -> BC-WF.
