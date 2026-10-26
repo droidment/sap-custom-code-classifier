@@ -200,8 +200,18 @@ class PipelineTest(unittest.TestCase):
         from common import load_processes, load_taxonomy  # noqa: E402
         cat = load_processes(TOOLS / "taxonomy")
         tax = load_taxonomy(TOOLS / "taxonomy")
-        fb = merge_mod.derive_process({"module": "UNKNOWN", "submodule": None, "area": None, "secondary": [], "source": "llm"}, cat, tax)
-        self.assertEqual([(p["process"], p["basis"]) for p in fb], [("OTH.UNMAPPED", "default")])
+        # pending objects and UNKNOWN modules get no process (they are not "unmappable", just not classified yet)
+        for src, mod in (("missing", "UNKNOWN"), ("llm", "UNKNOWN"), ("heuristic", "UNKNOWN")):
+            fb = merge_mod.derive_process({"module": mod, "submodule": None, "area": None, "secondary": [], "source": src}, cat, tax)
+            self.assertEqual(fb, [], (src, mod))
+        # an explicit OTH.UNMAPPED from the classifier is kept as such
+        fb = merge_mod.derive_process({"module": "FI", "submodule": None, "area": None, "secondary": [], "source": "llm",
+                                       "process": [{"process": "OTH.UNMAPPED", "role": "direct", "rationale": "treasury"}]}, cat, tax)
+        self.assertEqual([(p["process"], p["basis"]) for p in fb], [("OTH.UNMAPPED", "llm")])
+        # every classified module gets a crosswalk process
+        for mod in ("FI", "MM", "HCM", "BC", "PS-GPD"):
+            fb = merge_mod.derive_process({"module": mod.split("-")[0], "submodule": mod if "-" in mod else None, "area": None, "secondary": [], "source": "heuristic"}, cat, tax)
+            self.assertTrue(fb and fb[0]["basis"] == "crosswalk", (mod, fb))
         # review patch sets review_state
         (self.work / "review_patch.json").write_text(json.dumps([
             {"key": keys[0], "module": "FI", "submodule": "FI-GL", "confidence": 0.9, "purpose": "reviewed purpose", "rationale": "review: confirmed"}]), encoding="utf-8")

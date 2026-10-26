@@ -96,8 +96,10 @@ def derive_process(c: dict, cat: Optional[ProcessCatalog], tax: Taxonomy) -> Lis
                 seen.add(e["process"])
                 out.append({"process": e["process"], "role": s["role"], "label": cat.label(e["process"]), "basis": "crosswalk",
                             "rationale": f"crosswalk from secondary {node}"})
-    if not out and cat.valid(UNMAPPED_PROCESS):
-        # nothing fits (UNKNOWN module, or a node without crosswalk): park it in the explicit revisit bucket
+    if not out and cat.valid(UNMAPPED_PROCESS) and c["source"] != "missing" and c["module"] != "UNKNOWN":
+        # a classified object whose node has no crosswalk entry: park it in the explicit revisit bucket.
+        # Pending objects (no result yet) and UNKNOWN modules get no process at all: they are not "unmappable",
+        # they are simply not classified yet (outcome pending / needs_context).
         out.append({"process": UNMAPPED_PROCESS, "role": "direct", "label": cat.label(UNMAPPED_PROCESS), "basis": "default",
                     "rationale": "no business process could be derived; revisit"})
     return out

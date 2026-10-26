@@ -31,9 +31,10 @@ against a real system. Crosswalk: PS-GPD -> AND.GPD (+ AND.PROGRAM supporting, I
 CO-GOV -> AND.GOVCON (+ R2R.COST supporting, L2C.INVOICE context); PM-MRO -> AND.MRO (+ A2D.MAINTAIN
 supporting, L2C.SERVICE context); LO-EFF -> AND.EFFECT (+ P2F.PRODUCT supporting, I2M.DESIGN context).
 Group OTH "Other / revisit later" with the single module OTH.UNMAPPED (11 groups, 51 modules): merge falls
-back to it (basis `default`) when nothing can be derived; the classifier sets it explicitly, with a rationale
-naming the real process, when the object's process is not in the catalog; review_candidates lists those
-objects as group `process_unmapped`.
+back to it (basis `default`) only for a classified object (source not `missing`, module not UNKNOWN) whose
+node has no crosswalk entry; pending and UNKNOWN objects get an empty process list (explorer: "no process
+assigned"). The classifier sets it explicitly, with a rationale naming the real process, when the object's
+process is not in the catalog; review_candidates lists those objects as group `process_unmapped`.
 `tools/taxonomy/crosswalk.json`: `{version, map: {"<taxonomy node>": [{process, role}]}}` for every module
 and the submodules whose process differs from the module's (FI-AP -> S2P.INVOICE direct + R2R.LEDGER
 supporting; FI-AR -> L2C.INVOICE; FI-AA -> A2D.ASSET; FI-TV -> H2R.TRAVEL; CO-PC -> R2R.PRODUCTCOST; CO-PA ->
