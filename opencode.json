@@ -3,6 +3,15 @@
   "instructions": [
     "AGENTS.md"
   ],
+  "tools": {
+    "edit": true,
+    "write": true,
+    "apply_patch": true,
+    "patch": true,
+    "read": true,
+    "bash": true,
+    "task": true
+  },
   "permission": {
     "edit": {
       "*": "ask",

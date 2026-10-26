@@ -86,6 +86,9 @@ to the strong model and run `/classify --min-confidence 0.6`.
 Keep the edit catch-all at `ask`: OpenCode copies a parent agent's edit *deny* rules into every subagent session
 and evaluates them last, so a project-wide `"*": "deny"` silently strips the classifier of its file-writing tool
 ("Write tool is unavailable ... denied by workspace policy").
+A company-wide global config (`%USERPROFILE%\.config\opencode\opencode.json[c]`) may switch tools off in its
+`tools` block; the project `opencode.json` re-enables `edit`, `write`, `apply_patch`, `read`, `bash` and `task`
+for this folder, because project config merges on top of global config.
 
 ## Business process view
 Besides the SAP module, every object gets business-process assignments in the style of SAP's Reference

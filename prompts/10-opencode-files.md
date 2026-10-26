@@ -14,7 +14,8 @@ Write `opencode.json`, the four agent files, the nine command files, the three s
 
 ## 11. OpenCode files
 
-`opencode.json`: `$schema https://opencode.ai/config.json`, NO `model`/`small_model` keys (the TUI-selected
+`opencode.json`: `$schema https://opencode.ai/config.json`, `tools {edit, write, apply_patch, patch, read, bash, task: true}`
+(re-enables file tools a global company config may have switched off), NO `model`/`small_model` keys (the TUI-selected
 model is used everywhere; older OpenCode versions reject unknown keys, so add nothing else), `instructions ["AGENTS.md"]`, `permission.edit {"*": ask,
 "work/**": allow, "output/**": allow, "migration.config.json": ask, "tools/taxonomy/rules_custom.json": ask}` (the
 catch-all must be `ask`, never `deny`: OpenCode forwards a parent agent's edit DENY rules into every subagent
