@@ -148,7 +148,9 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(by[keys[0]]["outcome"], "classified")
         self.assertEqual(by[keys[0]]["review_state"], "proposed")
         self.assertEqual(by[keys[0]]["provenance"]["model"], "mock")
-        self.assertEqual(by[keys[0]]["provenance"]["prompt_version"], "classifier-1.1")
+        sys.path.insert(0, str(TOOLS))
+        import merge as merge_mod  # noqa: E402
+        self.assertEqual(by[keys[0]]["provenance"]["prompt_version"], merge_mod.PROMPT_VERSION)
         nodes_version = json.loads((TOOLS / "taxonomy" / "nodes.json").read_text(encoding="utf-8"))["version"]
         self.assertEqual(by[keys[0]]["provenance"]["taxonomy_version"], nodes_version)
         self.assertTrue(all(o["outcome"] in cls["outcomes"] for o in cls["objects"]))
@@ -162,8 +164,6 @@ class PipelineTest(unittest.TestCase):
             self.assertEqual([(p["process"], p["role"]) for p in by[keys[1]]["process"]], [("R2R.LEDGER", "direct"), ("S2P.PROCURE", "context")])
         self.assertEqual(cls["process_catalog"]["source"], "local")
         # fallback: an object with no derivable process lands in the explicit revisit bucket
-        sys.path.insert(0, str(TOOLS))
-        import merge as merge_mod  # noqa: E402
         from common import load_processes, load_taxonomy  # noqa: E402
         cat = load_processes(TOOLS / "taxonomy")
         tax = load_taxonomy(TOOLS / "taxonomy")
