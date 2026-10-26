@@ -139,6 +139,11 @@ class PipelineTest(unittest.TestCase):
         self.assertIn(ev["SYSA|FUGR|ZWF_HR"]["submodule"], ("HCM-WF", "HCM-PA", None))
         self.assertEqual(ev["SYSB|PROG|ZFI_POST"]["module"], "FI")
         self.assertEqual(ev["SYSA|CLAS|ZCL_DOC_HELPER"]["decision"], "needs_llm", ev["SYSA|CLAS|ZCL_DOC_HELPER"]["top"])
+        # unchanged inputs -> the rescoring is skipped; --force or a new inventory rescored
+        self.assertIn("(unchanged, skipped)", run("evidence.py"))
+        self.assertNotIn("skipped", run("evidence.py", "--force"))
+        run("inventory.py")
+        self.assertNotIn("skipped", run("evidence.py"))
 
     def test_03_batches_merge_overlaps_render(self):
         run("unchunk.py")

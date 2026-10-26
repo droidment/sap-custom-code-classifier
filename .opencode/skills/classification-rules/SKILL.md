@@ -69,7 +69,9 @@ filter; tree.md has a process section; the CSV has process_primary / process_all
 ## Re-running and tuning
 - `/classify --limit 1`: smoke test on one batch.  `/classify --min-confidence 0.6`: re-batch weak objects
   (batch ids `R001...`).  `/classify --only-module UNKNOWN`: only the undecided.
-- Changing rules: auto results are recomputed on every run; LLM results persist.
+- `evidence.py` skips the rescoring when inventory, taxonomy files and thresholds are unchanged since its
+  last run (`work/evidence_sig.json`); `--force` rescored anyway. Changing a rule file or re-running
+  inventory triggers a rescore automatically; LLM results persist either way.
 - Too many `needs_llm`? Add your Z-tables and naming conventions to `rules_custom.json` and lower
   `auto_min_score` to 5. Too many wrong autos? Raise `auto_min_margin`.
 - Large systems: set `batches_per_run` so one `/classify` fits your session; run it in a loop.

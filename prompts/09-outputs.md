@@ -38,6 +38,10 @@ Write `tools/render_html.py`, `tools/render_tree.py`, `tools/target_skeleton.py`
   implicitly; counts per system and type. Move action per object: `triage` (UNKNOWN or confidence below
   threshold), `dedupe` (identical across systems; the first key keeps, others "drop, duplicate of"),
   `resolve` (diverged: rename per system or merge logic), else `move`. `TARGET_OK packages= moves= ...`.
+- `tools/evidence.py` input signature: `{files: {inventory: [size, mtime_ns], <each taxonomy/*.json>: [...]},
+  classification: <config section>}` saved with the summary line in `work/evidence_sig.json`; when it equals the
+  saved one and evidence.jsonl exists, print the saved summary + ` (unchanged, skipped)` and exit 0 (`--force`
+  rescored). Test: second run skipped, `--force` not skipped, after a new inventory not skipped.
 - `tools/status.py`: roots OK/MISSING (+ unchunk state for chunk systems), inventory counts, evidence
   auto/needs_llm, batches prepared/with results/pending, classification stats, overlaps summary, review patch
   presence, output files with sizes, and a final `NEXT: <command>` line.

@@ -8,6 +8,7 @@ Usage:  py tools/evidence.py --config migration.config.json
 """
 from __future__ import annotations
 
+import json
 import re
 import sys
 from collections import Counter, defaultdict
@@ -451,11 +452,34 @@ def module_vector(scores: Dict[str, float], tax: Taxonomy) -> Dict[str, float]:
 
 
 # --------------------------------------------------------------------------------------
+def input_signature(cfg) -> dict:
+    """What the scoring depends on: the inventory file, every taxonomy file, the classification thresholds."""
+    def stat(p: Path) -> List[int]:
+        st = p.stat()
+        return [st.st_size, st.st_mtime_ns]
+    files = {"inventory": stat(cfg.inventory_file)}
+    for p in sorted(cfg.taxonomy_path.glob("*.json")):
+        files[p.name] = stat(p)
+    return {"files": files, "classification": cfg.classification}
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     ap = base_argparser(__doc__)
+    ap.add_argument("--force", action="store_true", help="rescore even if inventory, taxonomy and thresholds are unchanged")
     args = ap.parse_args(argv)
     cfg = load_config(args.config)
     ccfg = cfg.classification
+    sig_file = cfg.evidence_file.with_name("evidence_sig.json")
+    sig = input_signature(cfg)
+    if not args.force and cfg.evidence_file.exists() and sig_file.exists():
+        try:
+            prev = json.loads(sig_file.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            prev = {}
+        if prev.get("signature") == sig and prev.get("summary"):
+            log("evidence: inventory, taxonomy and thresholds unchanged since the last run; skipping (use --force to rescore)")
+            print(prev["summary"] + " (unchanged, skipped)")
+            return 0
     tax = load_taxonomy(cfg.taxonomy_path)
     idx = RuleIndex(tax)
     inv = read_jsonl(cfg.inventory_file)
@@ -547,7 +571,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     n = write_jsonl(cfg.evidence_file, out_rows)
     log(f"wrote {n} -> {cfg.evidence_file}; auto={counts['auto']} needs_llm={counts['needs_llm']}")
     mods = ", ".join(f"{k[7:]}={v}" for k, v in counts.most_common() if k.startswith("module:"))
-    print(f"EVIDENCE_OK objects={n} auto={counts['auto']} needs_llm={counts['needs_llm']} modules: {mods}")
+    summary = f"EVIDENCE_OK objects={n} auto={counts['auto']} needs_llm={counts['needs_llm']} modules: {mods}"
+    sig_file.write_text(json.dumps({"signature": sig, "summary": summary}, indent=1), encoding="utf-8")
+    print(summary)
     return 0
 
 
