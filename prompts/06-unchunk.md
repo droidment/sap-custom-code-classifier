@@ -23,12 +23,14 @@ For each system with `format: chunks`:
    `^#{2,}\s*OBJECT(?:[\s:]*(?:[A-Z0-9_]+:)?(?P<type>[A-Z]{4})[:\s]*(?P<name>/?[A-Z][A-Z0-9_/]+)?)?` (hash_object,
    for `###OBJECT   D66:FUNC:Y2F_X   FUNC   Y2F_X` lines);
    `^\*{2,}\s*(?:OBJECT|OBJ|BEGIN)(?:\s+OF)?\b[:\s]*(?P<type>[A-Z]{4}\b)?[:\s]*(?P<name>/?[A-Z][A-Z0-9_/]+)?`;
-   `^[\*"]\s*#{2,}\s*(?P<type>[A-Z]{4}\b)?\s*(?P<name>...)?`; `^\*&\s*(?:Report|Include|Program)\s+(?P<name>\S+)`;
+   `^[\*"]\s*#{2,}\s*(?!END_)(?P<type>[A-Z]{4}\b)?\s*(?P<name>...)?`; `^\*&\s*(?:Report|Include|Program)\s+(?P<name>\S+)`;
    `^(?:REPORT|PROGRAM|FUNCTION-POOL)\s+(?P<name>...)|^CLASS\s+(?P<name2>...)\s+DEFINITION\b(?!.*\b(?:LOCAL|DEFERRED|LOAD)\b)|^INTERFACE\s+(?P<name3>...)\s+PUBLIC`.
    Note type and name are optional so a marker without a usable name still starts a segment.
    Save `{sys|pkg: {marker, pattern, chunks, chars}}` to `work/unchunk_format.json`.
-3. Split into segments at marker lines (comment-style markers are dropped; statement-style markers stay in
-   the segment). Infer type/name from the segment's first statement when the marker lacks them:
+3. Split into segments at marker lines (comment-style and `#`-style markers are dropped; statement-style
+   markers stay in the segment; `^#{2,}\s*END_OBJECT` lines are dropped everywhere). A FUNC segment whose
+   tail has `* ###END_PROGRAM SAPLZFG` (optionally `/NS/SAPLZFG`) belongs to function group ZFG (flag
+   `fugr_from_end_marker`), before the preceding FUNCTION-POOL and before the synthetic name. Infer type/name from the segment's first statement when the marker lacks them:
    `REPORT/PROGRAM` -> PROG; `FUNCTION-POOL` -> FUGR; `CLASS x DEFINITION` (not LOCAL/DEFERRED/LOAD, not
    LCL_/LTCL_) -> CLAS; `CLASS x IMPLEMENTATION` -> CLAS (merged into the same object); `INTERFACE x PUBLIC`
    -> INTF; `FUNCTION x.` -> FUNC; `*& Include X` header box -> PROG with flag include.

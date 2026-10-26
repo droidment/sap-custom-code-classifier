@@ -34,10 +34,17 @@ Build in this order and run `py -I tools/tests/test_pipeline.py` after each step
   split into a DEFINITION marker and an IMPLEMENTATION marker, the FUGR as `*** OBJECT FUGR ZWF_HR ***` +
   pool line and `*** OBJECT FUNC Z_WF_HR_START ***` + FM, plus `*** OBJECT ***` followed by a nameless
   fragment; sliced into 900-byte files `zchunked/z1_0001.abapchunk` ... written raw (no newline added).
+- SYS_D (chunks, `###OBJECT` style): `zhash/d1_0001..` 700-byte files holding PROG ZD_REPORT, FUNC
+  Z_D_AUTH_CHECK and FUNC Z_D_AUTH_LOG (both ending `* ###END_PROGRAM SAPLZDFG`), CLAS ZCL_D_HELPER, each as
+  `###OBJECT          D66:<TYPE>:<NAME>     <TYPE>    <NAME>` + body + `* ###END_PROGRAM <prog>` + `###END_OBJECT`.
 - `fixtures/migration.config.json`: SYSA, SYSB, SYSC(chunks); work/output under `../_tmp/`; taxonomy
-  `../../taxonomy`; batch_size 5.
+  `../../taxonomy`; batch_size 5. `fixtures/migration.config_hash.json`: SYSD only, work/output under
+  `../_tmp_hash/`.
 
-`test_pipeline.py` (unittest, subprocess calls with `sys.executable -I`): (00) unchunk --inspect mentions
+`test_pipeline.py` (unittest, subprocess calls with `sys.executable -I`; `run(script, *args, cfg=CFG)`): (00b, on
+the hash config) --inspect mentions hash_object; unresolved=0; manifest exactly PROG ZD_REPORT, FUGR ZDFG with fms
+[Z_D_AUTH_CHECK, Z_D_AUTH_LOG] and flag fugr_from_end_marker (no synthetic_fugr), CLAS ZCL_D_HELPER; no written
+.abap contains `###OBJECT` or `###END_OBJECT`; inventory lists the two FMs as children. (00) unchunk --inspect mentions
 the detected marker; unchunk reports unresolved=1; manifest has exactly PROG ZHR_TS_REPORT, CLAS
 ZCL_UTIL_STRING, CLAS ZCL_PO_CHECK, CLAS ZCL_DOC_HELPER, FUGR ZWF_HR with fms [Z_WF_HR_START]; the PO class
 file contains both DEFINITION and IMPLEMENTATION; a second run reports unchanged_packages=1 and still 1
