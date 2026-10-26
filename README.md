@@ -21,7 +21,14 @@ library only. The LLM is used only for the objects the heuristics cannot settle,
 5. Smoke test without any LLM: `py tools/tests/test_pipeline.py` (runs on synthetic fixtures).
 
 ## Running
-Start `opencode` in this folder (the `sap-migration` agent is the primary agent), then:
+Start `opencode` in this folder and stay in your normal (build) agent. Every project command runs as a
+subagent (`subtask: true` in `.opencode/commands/*.md`): the deterministic script output and the LLM work stay
+in that subagent's context, and only its final report comes back to your conversation. `/unchunk`, `/review`
+and `/target-packages` run directly as `abap-splitter`, `abap-reviewer` and `abap-architect`; `/classify` runs as
+the `sap-migration` orchestrator, which launches one `abap-classifier` subagent per batch. That second level
+needs `"subagent_depth": 2` in `opencode.json` (shipped). On an OpenCode version that does not know
+`subagent_depth`, delete that key and remove `subtask: true` from `.opencode/commands/classify.md`; `/classify`
+then runs in your current agent and still launches the classifier subagents.
 
 | Command | What it does | Output |
 |---|---|---|
@@ -104,7 +111,7 @@ against the taxonomy. Details: `.opencode/skills/classification-rules/SKILL.md`.
 ## Layout
 ```
 opencode.json  AGENTS.md  migration.config.json
-.opencode/agents/     sap-migration (primary), abap-splitter, abap-classifier, abap-reviewer, abap-architect
+.opencode/agents/     sap-migration (orchestrator subagent), abap-splitter, abap-classifier, abap-reviewer, abap-architect
 .opencode/commands/   inspect-chunks, unchunk, inventory, classify, review, explorer, tree, target-packages, status
 .opencode/skills/     sap-module-taxonomy, abapgit-layout, classification-rules
 tools/                unchunk, inventory, evidence, prep_batches, merge, overlaps, review_candidates,

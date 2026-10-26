@@ -1,8 +1,9 @@
 ---
-description: Stage 2 - score evidence, build LLM batches, classify the pending batches in parallel, merge, detect overlaps. Resumable; re-run until no batches remain. Args are passed to prep_batches (--limit 2 smoke test, --only-system S1D one system at a time, --min-confidence 0.6 re-run weak ones).
+description: Stage 2 - score evidence, build LLM batches, classify the pending batches in parallel (one abap-classifier subagent per batch), merge, detect overlaps. Resumable; re-run until no batches remain. Args are passed to prep_batches (--limit 2 smoke test, --only-system S1D one system at a time, --min-confidence 0.6 re-run weak ones).
 agent: sap-migration
+subtask: true
 ---
-Run stage 2 (classification). Deterministic parts have already been executed; their output follows.
+Stage 2 (classification). Deterministic parts have already been executed; their output follows.
 
 Evidence scoring:
 !`py tools/evidence.py --config migration.config.json`
@@ -18,6 +19,9 @@ Now do the LLM part:
 2. For each of those batch ids, invoke the `abap-classifier` subagent with the Task tool, in parallel
    (several Task calls in one message). The task prompt is exactly:
    "Classify batch work/batches/<batch_id>.json and write work/llm/<batch_id>.json."
+   If the Task tool answers "Subagent depth limit reached", stop and tell the user to set
+   `"subagent_depth": 2` in opencode.json (or remove `subtask: true` from .opencode/commands/classify.md).
+   Never classify the objects yourself.
 3. When they have all returned, run `py tools/merge.py --config migration.config.json` and then
    `py tools/overlaps.py --config migration.config.json`.
 4. Report: auto vs LLM counts, objects per module (from the MERGE_OK / status output), validation errors
@@ -25,3 +29,4 @@ Now do the LLM part:
    If batches remain, tell the user to run `/classify` again (it continues where it stopped) or to loop it.
    If none remain, say the classification is complete and suggest `/review` (optional) and `/explorer`.
 If there were no pending batches at all, skip steps 1-2 and just run steps 3-4.
+You run as a subagent: the user sees only your final message, so put the whole report there (short, numbers in a small table, then the next command to run).

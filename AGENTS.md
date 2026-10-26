@@ -19,6 +19,8 @@ find overlaps between the systems, and propose the target package design for the
 - Taxonomy ids (`tools/taxonomy/nodes.json`) are the contract between all stages. Do not invent ids.
   Company-specific rules go in `tools/taxonomy/rules_custom.json`, never in the shipped rule files.
 - Process at most `classification.batches_per_run` batches per `/classify`; report the remainder.
+- Every `/command` runs as a subagent (`subtask: true`); the user only sees its final message, so the command's
+  report must be complete. `/classify` fans out to `abap-classifier` subagents and relies on `subagent_depth: 2`.
 - Do not load `work/classification.json` or whole source folders into the conversation. Use
   `py tools/status.py` or a short Python one-liner for numbers.
 

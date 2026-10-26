@@ -1,5 +1,5 @@
 ---
-description: Designs the target S/4HANA custom-code package hierarchy from the classification and overlap analysis. Writes output/target_packages.md. One-shot, high-judgment task.
+description: Designs the target S/4HANA custom-code package hierarchy from the classification and overlap analysis. Writes output/target_packages.md. One-shot, high-judgment task. Invoked by /target-packages (the command runs as this subagent) or by the orchestrator.
 mode: subagent
 model: azure/az-gpt-5.6-sol
 temperature: 0.2

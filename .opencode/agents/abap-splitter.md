@@ -1,5 +1,5 @@
 ---
-description: Names the source segments that tools/unchunk.py could not attribute to an object (chunked exports). Reads work/unchunk_unresolved.json, writes work/unchunk_resolution.json. Invoked by /unchunk only when unresolved > 0.
+description: Names the source segments that tools/unchunk.py could not attribute to an object (chunked exports). Reads work/unchunk_unresolved.json, writes work/unchunk_resolution.json. Invoked by /unchunk (the command runs as this subagent) or by the orchestrator.
 mode: subagent
 model: azure/az-gpt-5.6-terra
 temperature: 0.1

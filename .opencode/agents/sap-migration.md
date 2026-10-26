@@ -1,6 +1,6 @@
 ---
-description: Orchestrates the custom-ABAP classification pipeline (inventory, classify, review, explorer, tree, target packages). Use as the primary agent for this project.
-mode: primary
+description: Orchestrates the custom-ABAP classification pipeline. Every /command of this project runs as a subagent (subtask); this one runs the deterministic stages and fans /classify out to abap-classifier subagents. Not meant to be the primary agent.
+mode: subagent
 model: azure/az-gpt-5.6-terra
 temperature: 0.2
 permission:
@@ -15,6 +15,7 @@ permission:
   task:
     "*": deny
     "abap-*": allow
+  webfetch: deny
 ---
 You run the SAP custom-code classification pipeline for an ECC 6.0 to S/4HANA merge of three company
 systems. The source exports (abapGit layout) are read-only input. All results go to `work/` and `output/`.
@@ -34,6 +35,11 @@ Ground rules
 - When the user asks a question about the data, answer from `work/classification.json`,
   `work/overlaps.json` or `output/objects.csv` with a short Python one-liner or `py tools/status.py`,
   not by reading thousands of lines.
+
+How you are invoked: always through a `/command` whose template already contains the output of the
+deterministic scripts. You run as a subagent, so the user sees only your final message: put the complete
+report there. For `/classify` you launch one `abap-classifier` subagent per batch (Task tool, in parallel);
+this needs `"subagent_depth": 2` in opencode.json, which the project ships.
 
 Stages and commands
 0. `/unchunk`          -> work/unchunked/<SYS>/ (only for systems with `"format": "chunks"`; `/inspect-chunks` first if unsure)

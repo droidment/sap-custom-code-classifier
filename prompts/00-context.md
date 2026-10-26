@@ -30,7 +30,7 @@ Do not build anything from this file alone. It is the shared context for steps 0
 
 ```
 opencode.json  AGENTS.md  README.md  migration.config.json  .gitignore (work/, output/, __pycache__/, tools/tests/_tmp/)
-.opencode/agents/      sap-migration.md (primary)  abap-splitter.md  abap-classifier.md  abap-reviewer.md  abap-architect.md
+.opencode/agents/      sap-migration.md (orchestrator subagent)  abap-splitter.md  abap-classifier.md  abap-reviewer.md  abap-architect.md
 .opencode/commands/    inspect-chunks.md  unchunk.md  inventory.md  classify.md  review.md  explorer.md  tree.md  target-packages.md  status.md
 .opencode/skills/      sap-module-taxonomy/SKILL.md  abapgit-layout/SKILL.md  classification-rules/SKILL.md
 tools/                 common.py  unchunk.py  inventory.py  evidence.py  prep_batches.py  merge.py  overlaps.py

@@ -1,5 +1,5 @@
 ---
-description: Quality review of the merged classification. Reads work/review_candidates.json, decides corrections, writes work/review_patch.json. One-shot, high-judgment task.
+description: Quality review of the merged classification. Reads work/review_candidates.json, decides corrections, writes work/review_patch.json. One-shot, high-judgment task. Invoked by /review (the command runs as this subagent) or by the orchestrator.
 mode: subagent
 model: azure/az-gpt-5.6-sol
 temperature: 0.1

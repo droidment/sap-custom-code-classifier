@@ -22,7 +22,7 @@ head/tail *: allow}`, `webfetch deny`, `task {"*": deny, "abap-*": allow}`.
 
 Agents (`.opencode/agents/<name>.md`, frontmatter `description`, `mode`, `model`, `temperature`, `steps`,
 `permission` with the same edit/shell/task keys):
-- `sap-migration` (primary, terra, 0.2): orchestrator. Body: roots are read-only; run the Python tools and
+- `sap-migration` (subagent orchestrator, terra, 0.2): orchestrator. Body: roots are read-only; run the Python tools and
   read their `*_OK` line; LLM work only via subagents on prepared files; never classify inline; everything
   resumable; process at most `batches_per_run` batches per /classify and report the remainder; taxonomy ids
   are the contract; answer data questions with status.py or a one-liner, never by loading big files; the
@@ -51,19 +51,25 @@ Agents (`.opencode/agents/<name>.md`, frontmatter `description`, `mode`, `model`
   rename-and-keep vs merge-behind-switch; similar review list), triage backlog by package, migration
   sequence from uses/used_by, numbered open decisions. Cite real names and counts, under ~4 pages.
 
-Commands (`.opencode/commands/<name>.md`, frontmatter `description`, `agent: sap-migration`, optional
-`model`): shell output is injected with `` !`py tools/<script>.py --config migration.config.json $ARGUMENTS` ``,
-then instructions.
+Commands (`.opencode/commands/<name>.md`, frontmatter `description`, `agent`, `subtask: true`, optional
+`model`): every command runs as a subagent, so the user sees only its final report. Shell output is injected
+with `` !`py tools/<script>.py --config migration.config.json $ARGUMENTS` ``, then instructions. `agent` is
+`sap-migration` (a `mode: subagent` orchestrator, terra) unless stated; single-shot LLM stages run directly as
+their subagent. `opencode.json` sets top-level `"subagent_depth": 2` so the `/classify` orchestrator may
+launch classifier subagents, and `permission.task` allows `abap-*` and `sap-migration`.
 - `inspect-chunks` (luna): unchunk.py --inspect $ARGUMENTS; relay; propose an object_marker regex if none.
-- `unchunk`: unchunk.py; if unresolved > 0 invoke abap-splitter via Task, then `--apply-resolution`; next /inventory.
+- `unchunk` (agent abap-splitter): unchunk.py; if unresolved > 0 resolve the segments itself, then run
+  `--apply-resolution`; next /inventory.
 - `inventory` (luna): inventory.py; table of counts; next /classify.
 - `classify`: evidence.py; prep_batches.py $ARGUMENTS; pending.py; then invoke abap-classifier once per id
   on the THIS_RUN line, in parallel Task calls, prompt "Classify batch work/batches/<id>.json and write
-  work/llm/<id>.json."; then merge.py and overlaps.py; report counts, merge errors, overlaps, remaining
-  batches ("run /classify again or loop it"); if nothing pending, just merge and overlaps.
-- `review`: review_candidates.py; invoke abap-reviewer once; merge.py --apply-review; overlaps.py; report.
+  work/llm/<id>.json." (on "Subagent depth limit reached" tell the user to set subagent_depth 2); then
+  merge.py and overlaps.py; report counts, merge errors, overlaps, remaining batches ("run /classify again or
+  loop it"); if nothing pending, just merge and overlaps.
+- `review` (agent abap-reviewer): review_candidates.py; do the review itself; merge.py --apply-review;
+  overlaps.py; report.
 - `explorer` (luna): render_html.py $ARGUMENTS; report path/size.  `tree` (luna): render_tree.py.
-- `target-packages`: target_skeleton.py $ARGUMENTS; invoke abap-architect once; report.
+- `target-packages` (agent abap-architect): target_skeleton.py $ARGUMENTS; write the design itself; report.
 - `status` (luna): status.py; repeat NEXT.
 
 Skills (`.opencode/skills/<name>/SKILL.md`, frontmatter `name`, `description`): `sap-module-taxonomy`

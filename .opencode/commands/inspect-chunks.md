@@ -1,6 +1,7 @@
 ---
 description: Look at a chunked export before rebuilding it - chunk files per package, numbering gaps, the detected object-marker pattern and the first markers. Args - optional system id and package name, e.g. "SYSC ZDEV".
 agent: sap-migration
+subtask: true
 model: azure/az-gpt-5.6-luna
 ---
 Chunk inspection:
@@ -10,3 +11,4 @@ Relay the result. For each package say which marker pattern was detected and sho
 If a package says NONE DETECTED, quote the first lines and ask the user what separates objects in this
 export, then propose a regex with named groups `type` (optional) and `name` for `object_marker` in
 migration.config.json. Do not run the rebuild from here; the user runs `/unchunk` when satisfied.
+You run as a subagent: the user sees only your final message, so put the whole report there (short, numbers in a small table, then the next command to run).
