@@ -6,7 +6,7 @@ steps: 40
 permission:
   edit:
     "*": deny
-    "work/unchunk_resolution.json": allow
+    "*work/unchunk_resolution.json": allow
   shell:
     "*": deny
     "py tools/*": allow

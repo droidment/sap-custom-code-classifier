@@ -6,7 +6,7 @@ steps: 60
 permission:
   edit:
     "*": deny
-    "output/target_packages.md": allow
+    "*output/target_packages.md": allow
   shell:
     "*": deny
     "py tools/*": allow

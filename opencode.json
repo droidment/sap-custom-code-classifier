@@ -15,10 +15,10 @@
   "permission": {
     "edit": {
       "*": "ask",
-      "work/**": "allow",
-      "output/**": "allow",
-      "migration.config.json": "ask",
-      "tools/taxonomy/rules_custom.json": "ask"
+      "*work/*": "allow",
+      "*output/*": "allow",
+      "*migration.config.json": "ask",
+      "*rules_custom.json": "ask"
     },
     "shell": {
       "*": "ask",

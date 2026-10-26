@@ -83,6 +83,8 @@ to the strong model and run `/classify --min-confidence 0.6`.
 
 ### Permissions
 `opencode.json` allows edits under `work/` and `output/` and shell commands `py tools/*`; everything else asks.
+Path patterns start with `*` (`*work/llm/*`, not `work/llm/**`): OpenCode anchors the pattern at both ends and,
+depending on the version, checks the absolute path, so a pattern without the leading `*` never matches.
 Keep the edit catch-all at `ask`: OpenCode copies a parent agent's edit *deny* rules into every subagent session
 and evaluates them last, so a project-wide `"*": "deny"` silently strips the classifier of its file-writing tool
 ("Write tool is unavailable ... denied by workspace policy").

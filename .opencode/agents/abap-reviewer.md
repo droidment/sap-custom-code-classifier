@@ -6,8 +6,8 @@ steps: 60
 permission:
   edit:
     "*": deny
-    "work/review_patch.json": allow
-    "work/review.md": allow
+    "*work/review_patch.json": allow
+    "*work/review.md": allow
   shell:
     "*": deny
     "py tools/*": allow

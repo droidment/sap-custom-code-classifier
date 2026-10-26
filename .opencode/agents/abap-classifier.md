@@ -6,7 +6,7 @@ steps: 40
 permission:
   edit:
     "*": deny
-    "work/llm/**": allow
+    "*work/llm/*": allow
   shell:
     "*": deny
     "py tools/*": allow
