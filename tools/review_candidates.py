@@ -11,6 +11,8 @@ Candidate groups
   cross_system_mismatch   same TYPE+NAME classified differently in different systems
   package_outliers        objects whose module differs from >= 80% of their package
   llm_flags               objects the LLM flagged needs-human / cross-module / mixed-fugr
+  process_unmapped        objects parked in OTH.UNMAPPED (no business process in the catalog fits); the
+                          rationale says which process they really belong to -> input for extending the catalog
 
 Usage:  py tools/review_candidates.py --config migration.config.json
 """
@@ -56,6 +58,10 @@ def main(argv: Optional[List[str]] = None) -> int:
                 groups["disagree_heuristic"].append(brief(o))
         if any(f in ("needs-human", "cross-module", "mixed-fugr") for f in o.get("flags", [])):
             groups["llm_flags"].append(brief(o))
+        if any(p.get("process") == "OTH.UNMAPPED" for p in o.get("process", [])):
+            b = brief(o)
+            b["process_rationale"] = next((p.get("rationale", "") for p in o["process"] if p.get("process") == "OTH.UNMAPPED"), "")
+            groups["process_unmapped"].append(b)
 
     for e in overlaps.get("same_name", []):
         mods = {m for m in e.get("modules", {}).values() if m}

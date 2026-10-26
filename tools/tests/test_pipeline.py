@@ -161,6 +161,14 @@ class PipelineTest(unittest.TestCase):
         if len(keys) > 1:   # second llm object: crosswalk FI-GL -> R2R.LEDGER plus MM-PUR secondary -> S2P.PROCURE (context)
             self.assertEqual([(p["process"], p["role"]) for p in by[keys[1]]["process"]], [("R2R.LEDGER", "direct"), ("S2P.PROCURE", "context")])
         self.assertEqual(cls["process_catalog"]["source"], "local")
+        # fallback: an object with no derivable process lands in the explicit revisit bucket
+        sys.path.insert(0, str(TOOLS))
+        import merge as merge_mod  # noqa: E402
+        from common import load_processes, load_taxonomy  # noqa: E402
+        cat = load_processes(TOOLS / "taxonomy")
+        tax = load_taxonomy(TOOLS / "taxonomy")
+        fb = merge_mod.derive_process({"module": "UNKNOWN", "submodule": None, "area": None, "secondary": [], "source": "llm"}, cat, tax)
+        self.assertEqual([(p["process"], p["basis"]) for p in fb], [("OTH.UNMAPPED", "default")])
         # review patch sets review_state
         (self.work / "review_patch.json").write_text(json.dumps([
             {"key": keys[0], "module": "FI", "submodule": "FI-GL", "confidence": 0.9, "purpose": "reviewed purpose", "rationale": "review: confirmed"}]), encoding="utf-8")

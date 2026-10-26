@@ -1,6 +1,6 @@
 {
  "_comment": "LOCAL business-process catalog in the style of SAP's Reference Business Architecture (process group > process module). Written by the project, not published by SAP: ids and module names are project aliases. Replace or extend with the official SAP reference snapshot when it is available (keep ids stable or add an 'alias_of' field). Segments/activities are intentionally not modelled.",
- "version": "local-2026-10-25b",
+ "version": "local-2026-10-25c",
  "source": "local",
  "groups": [
   {
@@ -310,6 +310,17 @@
      "id": "AND.PEO",
      "name": "Engineer and Execute Production (PEO)",
      "description": "S/4HANA Production Engineering and Operations: shop floor routing, work instructions, change records; target concept, no ECC source rules"
+    }
+   ]
+  },
+  {
+   "id": "OTH",
+   "name": "Other / revisit later (local)",
+   "modules": [
+    {
+     "id": "OTH.UNMAPPED",
+     "name": "Not mapped to a business process yet",
+     "description": "code whose business process is not in this catalog, or could not be determined; a queue to revisit when the catalog is extended or the official SAP reference is loaded"
     }
    ]
   }

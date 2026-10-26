@@ -60,7 +60,10 @@ not an SAP publication; swap in the official snapshot when available and keep th
 wins). merge derives `process: [{process, role, label, basis, rationale}]` per object: an explicit list from
 the classifier/reviewer (basis llm/review) wins; otherwise the crosswalk of the primary assignment plus the
 crosswalk of each secondary assignment with that assignment's role (basis crosswalk). Technical code maps to
-the TEC.* modules; UNKNOWN has no process. The explorer has a "group by business process" view and a process
+the TEC.* modules. Anything that cannot be mapped (UNKNOWN module, or a process the catalog does not have)
+is parked in `OTH.UNMAPPED` ("Other / revisit later"): the classifier may set it explicitly with a rationale
+naming the real process, merge sets it as a `default` basis fallback, and `review_candidates.py` lists these
+objects under `process_unmapped` so the catalog can be extended later. The explorer has a "group by business process" view and a process
 filter; tree.md has a process section; the CSV has process_primary / process_all / process_basis.
 
 ## Re-running and tuning

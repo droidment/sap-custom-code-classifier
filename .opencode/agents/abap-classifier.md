@@ -72,13 +72,17 @@ Rules
   module by a crosswalk. Leave `process` empty when the default is right. Set `process` only when the object
   belongs to a different process than its module suggests, or serves several processes (e.g. a production
   confirmation exit that also creates FI postings -> `P2F.PRODUCE` direct + `R2R.LEDGER` supporting).
-  Use ids from `processes` only; roles direct | supporting | context.
+  Use ids from `processes` only; roles direct | supporting | context. The catalog is deliberately limited to
+  the processes of a typical A&D manufacturer. When an object implements a business process that is NOT in
+  the catalog (e.g. treasury, real estate, EHS, consolidation), do not force the nearest module: set
+  `process` to `[{"process": "OTH.UNMAPPED", "role": "direct", "rationale": "<which process it really is>"}]`.
+  Those objects form a revisit queue; the rationale is what the catalog owner will read when extending it.
 
 Output: write EXACTLY one file `work/llm/<batch_id>.json` with this shape and nothing else:
 {
   "batch_id": "<batch_id>",
   "model": "<your model id>",
-  "prompt_version": "classifier-1.1",
+  "prompt_version": "classifier-1.2",
   "results": [
     {"key": "<key exactly as in the batch>", "module": "<id>", "submodule": "<id or null>", "area": "<id or null>",
      "confidence": 0.0-1.0, "purpose": "<one sentence>", "rationale": "<the evidence that decided it>", "flags": [],

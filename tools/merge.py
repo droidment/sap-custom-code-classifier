@@ -30,7 +30,8 @@ VALID_FLAGS = {"cross-module", "utility", "obsolete-candidate", "test-code", "mi
 SECONDARY_ROLES = {"supporting", "context"}          # the primary assignment is always role "direct"
 REVIEW_STATES = {"proposed", "reviewed", "rejected"}
 OUTCOMES = ("classified", "needs_context", "shared_technical", "extraction_failed", "pending")
-PROMPT_VERSION = "classifier-1.1"                    # bump when .opencode/agents/abap-classifier.md changes materially
+PROMPT_VERSION = "classifier-1.2"                    # bump when .opencode/agents/abap-classifier.md changes materially
+UNMAPPED_PROCESS = "OTH.UNMAPPED"                    # explicit "revisit later" bucket in tools/taxonomy/processes.json
 
 
 def normalize_secondary(items, tax: Taxonomy, key: str, errors: List[str]) -> List[dict]:
@@ -95,6 +96,10 @@ def derive_process(c: dict, cat: Optional[ProcessCatalog], tax: Taxonomy) -> Lis
                 seen.add(e["process"])
                 out.append({"process": e["process"], "role": s["role"], "label": cat.label(e["process"]), "basis": "crosswalk",
                             "rationale": f"crosswalk from secondary {node}"})
+    if not out and cat.valid(UNMAPPED_PROCESS):
+        # nothing fits (UNKNOWN module, or a node without crosswalk): park it in the explicit revisit bucket
+        out.append({"process": UNMAPPED_PROCESS, "role": "direct", "label": cat.label(UNMAPPED_PROCESS), "basis": "default",
+                    "rationale": "no business process could be derived; revisit"})
     return out
 
 
@@ -250,6 +255,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         for p in process:
             if p["role"] == "direct":
                 stats["process:" + p["process"].split(".")[0]] += 1
+        if any(p["process"] == UNMAPPED_PROCESS for p in process):
+            stats["process_unmapped"] += 1
         objects.append({
             "key": k, "system": rec["system"], "company": rec.get("company", ""), "type": rec["type"], "name": rec["name"],
             "package": rec["package"], "package_desc": rec.get("package_desc", ""), "description": rec.get("description", ""),
