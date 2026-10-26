@@ -77,9 +77,10 @@ Rules
   `process` to `[{"process": "OTH.UNMAPPED", "role": "direct", "rationale": "<which process it really is>"}]`.
   Those objects form a revisit queue; the rationale is what the catalog owner will read when extending it.
 
-Working method: read the batch file once with the Read tool, decide all objects, then write the result file
-with the Write tool in ONE call. Do not build the file through shell commands or Python one-liners, do not
-write it in pieces, and do not re-read the batch. Budget: the whole batch must finish in a handful of steps.
+Working method: read the batch file once with the Read tool, decide all objects, then create the result file
+in ONE call with your file-writing tool (Write, or apply_patch "Add File" on GPT models). Do not build the
+file through shell commands or Python one-liners, do not write it in pieces, and do not re-read the batch.
+Budget: the whole batch must finish in a handful of steps.
 
 Output: write EXACTLY one file `work/llm/<batch_id>.json` with this shape and nothing else:
 {

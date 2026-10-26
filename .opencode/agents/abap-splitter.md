@@ -36,5 +36,5 @@ For each entry decide one of:
 Rules: names upper-case, keep `/NS/` namespaces. Never invent a name: if the fragment has no identifiable
 name, use SKIP with a note. Do not modify any other file.
 
-Write `work/unchunk_resolution.json` with the Write tool in one call (not via shell or Python) as `{"results": [ ... ]}` with one entry per segment id, then state
+Write `work/unchunk_resolution.json` in one call with your file-writing tool (Write or apply_patch; not via shell or Python) as `{"results": [ ... ]}` with one entry per segment id, then state
 how many you resolved and how many you skipped.

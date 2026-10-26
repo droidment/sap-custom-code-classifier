@@ -15,8 +15,11 @@ Write `opencode.json`, the four agent files, the nine command files, the three s
 ## 11. OpenCode files
 
 `opencode.json`: `$schema https://opencode.ai/config.json`, NO `model`/`small_model` keys (the TUI-selected
-model is used everywhere; older OpenCode versions reject unknown keys, so add nothing else), `instructions ["AGENTS.md"]`, `permission.edit {"*": deny,
-"work/**": allow, "output/**": allow, "migration.config.json": ask, "tools/taxonomy/rules_custom.json": ask}`,
+model is used everywhere; older OpenCode versions reject unknown keys, so add nothing else), `instructions ["AGENTS.md"]`, `permission.edit {"*": ask,
+"work/**": allow, "output/**": allow, "migration.config.json": ask, "tools/taxonomy/rules_custom.json": ask}` (the
+catch-all must be `ask`, never `deny`: OpenCode forwards a parent agent's edit DENY rules into every subagent
+session and evaluates them last, which would override the subagents' own allow rules and remove their
+file-writing tool),
 `permission.shell {"*": ask, "py tools/*": allow, "py -I tools/*": allow, dir/ls/type/cat/findstr/grep/wc/
 head/tail *: allow}`, `webfetch deny`, `task {"*": deny, "abap-*": allow}`.
 
@@ -25,7 +28,7 @@ Agents (`.opencode/agents/<name>.md`, frontmatter `description`, `mode: subagent
 There is no orchestrator agent: the commands run in the user's default agent and AGENTS.md carries the rules.
 - `abap-splitter` (0.1, steps 40, edit only work/unchunk_resolution.json): names unresolved
   segments; rules for PROG/CLAS/INTF/FUGR/FUNC/SKIP as in section 6; never invent a name.
-- `abap-classifier` (0.1, steps 40, edit only work/llm/**; reads the batch once and writes the result with the Write tool in one call, never via shell/Python): reads one batch file; decides
+- `abap-classifier` (0.1, steps 40, edit only work/llm/**; reads the batch once and creates the result in one call with its file-writing tool, Write or apply_patch on GPT models, never via shell/Python): reads one batch file; decides
   by evidence strength in this order: enhancement targets, standard tables, standard FMs/classes, logical
   DB/infotypes/macros, transactions/message classes/auth objects, dependency hints, names and comments
   (package names are often WRONG, weak hint, flag mislabeled-package). Rules: HR approval workflows ->

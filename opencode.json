@@ -5,7 +5,7 @@
   ],
   "permission": {
     "edit": {
-      "*": "deny",
+      "*": "ask",
       "work/**": "allow",
       "output/**": "allow",
       "migration.config.json": "ask",

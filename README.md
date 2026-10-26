@@ -81,6 +81,12 @@ fails with "model not found"; leaving the line out can never fail.
 For a cheaper first pass run `/classify` with a small model selected; for a final pass on weak objects switch
 to the strong model and run `/classify --min-confidence 0.6`.
 
+### Permissions
+`opencode.json` allows edits under `work/` and `output/` and shell commands `py tools/*`; everything else asks.
+Keep the edit catch-all at `ask`: OpenCode copies a parent agent's edit *deny* rules into every subagent session
+and evaluates them last, so a project-wide `"*": "deny"` silently strips the classifier of its file-writing tool
+("Write tool is unavailable ... denied by workspace policy").
+
 ## Business process view
 Besides the SAP module, every object gets business-process assignments in the style of SAP's Reference
 Business Architecture (process group > process module, e.g. Source to Pay > Procure to Receive). The catalog in

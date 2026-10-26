@@ -40,7 +40,7 @@ Consistency rules to enforce
 - HR approval workflows are HCM-WF, not BC-WF.
 - UNKNOWN is acceptable only when the evidence is truly empty; then flag `needs-human`.
 
-Output (each file written with the Write tool in one call, not via shell or Python)
+Output (each file created in one call with your file-writing tool, Write or apply_patch; not via shell or Python)
 1. `work/review_patch.json`: a JSON list of records for every candidate you looked at:
    [{"key": "...", "module": "...", "submodule": null|"...", "area": null|"...", "confidence": 0.0-1.0,
      "purpose": "...", "rationale": "review: <why>", "flags": [...],
