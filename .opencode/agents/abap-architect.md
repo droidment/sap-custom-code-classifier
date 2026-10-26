@@ -2,7 +2,7 @@
 description: Designs the target S/4HANA custom-code package hierarchy from the classification and overlap analysis. Writes output/target_packages.md. One-shot, high-judgment task. Invoked once by /target-packages via the Task tool.
 mode: subagent
 temperature: 0.2
-steps: 20
+steps: 60
 permission:
   edit:
     "*": deny

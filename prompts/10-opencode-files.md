@@ -23,9 +23,9 @@ head/tail *: allow}`, `webfetch deny`, `task {"*": deny, "abap-*": allow}`.
 Agents (`.opencode/agents/<name>.md`, frontmatter `description`, `mode: subagent`, `temperature`, `steps`,
 `permission` with the same edit/shell/task keys; NO `model` line, the subagent inherits the caller's model).
 There is no orchestrator agent: the commands run in the user's default agent and AGENTS.md carries the rules.
-- `abap-splitter` (0.1, edit only work/unchunk_resolution.json): names unresolved
+- `abap-splitter` (0.1, steps 40, edit only work/unchunk_resolution.json): names unresolved
   segments; rules for PROG/CLAS/INTF/FUGR/FUNC/SKIP as in section 6; never invent a name.
-- `abap-classifier` (0.1, steps 12, edit only work/llm/**): reads one batch file; decides
+- `abap-classifier` (0.1, steps 40, edit only work/llm/**; reads the batch once and writes the result with the Write tool in one call, never via shell/Python): reads one batch file; decides
   by evidence strength in this order: enhancement targets, standard tables, standard FMs/classes, logical
   DB/infotypes/macros, transactions/message classes/auth objects, dependency hints, names and comments
   (package names are often WRONG, weak hint, flag mislabeled-package). Rules: HR approval workflows ->
@@ -35,12 +35,12 @@ There is no orchestrator agent: the commands run in the user's default agent and
   defensible level, null rather than guess; UNKNOWN only with no evidence and confidence <= 0.3;
   confidence calibration 0.9+ / 0.7-0.9 / 0.5-0.7 / < 0.5; purpose is one business sentence a manager
   understands. Output exactly `work/llm/<batch_id>.json` per 8.3, every object exactly once.
-- `abap-reviewer` (0.1, steps 20, edit only work/review_patch.json and work/review.md):
+- `abap-reviewer` (0.1, steps 60, edit only work/review_patch.json and work/review.md):
   consistency rules (same name same purpose -> same class in all systems; one FUGR -> one module unless
   genuinely mixed; package outliers need positive evidence; helpers per usage; HR workflows -> HCM-WF;
   UNKNOWN only with empty evidence, flag needs-human); writes patch (corrections only) and a report with
   systematic problems and up to 20 objects for a human.
-- `abap-architect` (0.2, steps 20, edit only output/target_packages.md): writes the target
+- `abap-architect` (0.2, steps 60, edit only output/target_packages.md): writes the target
   design with sections executive summary (table), naming convention (prefix, depth, where utilities,
   interfaces and company-specific variants live, `_<COMPANY>` suffix packages), hierarchy with counts (merge
   areas < 5 objects into the submodule), overlap resolution rules (identical keep one; diverged top 30 with

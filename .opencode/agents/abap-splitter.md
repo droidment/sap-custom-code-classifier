@@ -2,7 +2,7 @@
 description: Names the source segments that tools/unchunk.py could not attribute to an object (chunked exports). Reads work/unchunk_unresolved.json, writes work/unchunk_resolution.json. Invoked by /unchunk via the Task tool when unresolved > 0.
 mode: subagent
 temperature: 0.1
-steps: 12
+steps: 40
 permission:
   edit:
     "*": deny
@@ -36,5 +36,5 @@ For each entry decide one of:
 Rules: names upper-case, keep `/NS/` namespaces. Never invent a name: if the fragment has no identifiable
 name, use SKIP with a note. Do not modify any other file.
 
-Write `work/unchunk_resolution.json` as `{"results": [ ... ]}` with one entry per segment id, then state
+Write `work/unchunk_resolution.json` with the Write tool in one call (not via shell or Python) as `{"results": [ ... ]}` with one entry per segment id, then state
 how many you resolved and how many you skipped.
