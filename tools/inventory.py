@@ -148,7 +148,9 @@ def walk_system(system: dict, root: Path) -> Tuple[List[dict], Counter]:
     warnings: Counter = Counter()
     package_desc: Dict[str, str] = {}
 
+    log(f"[{sysid}] scanning files ...")
     all_files = [p for p in root.rglob("*") if p.is_file()]
+    log(f"[{sysid}] {len(all_files)} files found; reading metadata")
     # pass 1: packages
     for p in all_files:
         if p.name.lower() == "package.devc.xml":
@@ -156,7 +158,9 @@ def walk_system(system: dict, root: Path) -> Tuple[List[dict], Counter]:
             if x is not None:
                 package_desc[str(p.parent)] = extract_xml_meta("DEVC", x)["description"]
 
-    for p in sorted(all_files):
+    for i, p in enumerate(sorted(all_files), start=1):
+        if i % 5000 == 0:
+            log(f"[{sysid}] metadata {i}/{len(all_files)} files, {len(records)} objects so far")
         parsed = parse_abapgit_filename(p.name)
         if not parsed:
             if p.suffix.lower() in SOURCE_EXT or p.suffix.lower() == ".xml":
@@ -195,7 +199,10 @@ def walk_system(system: dict, root: Path) -> Tuple[List[dict], Counter]:
             rec["source_files"].append(relfile)
 
     # pass 2: source metrics, FM source mapping, header comments
-    for rec in records.values():
+    log(f"[{sysid}] {len(records)} objects; reading sources")
+    for i, rec in enumerate(records.values(), start=1):
+        if i % 2000 == 0:
+            log(f"[{sysid}] sources {i}/{len(records)} objects")
         normalized_parts = []
         loc = 0
         headers: List[str] = []
