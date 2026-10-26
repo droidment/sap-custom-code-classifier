@@ -21,14 +21,10 @@ library only. The LLM is used only for the objects the heuristics cannot settle,
 5. Smoke test without any LLM: `py tools/tests/test_pipeline.py` (runs on synthetic fixtures).
 
 ## Running
-Start `opencode` in this folder and stay in your normal (build) agent. The project commands run as subagents
-(`subtask: true` in `.opencode/commands/*.md`): script output and LLM work stay in the subagent's context and
-only its final report comes back to your conversation. `/unchunk`, `/review` and `/target-packages` run directly
-as `abap-splitter`, `abap-reviewer` and `abap-architect`; `/inventory`, `/explorer`, `/tree`, `/status` and
-`/inspect-chunks` run as the `sap-migration` orchestrator subagent. The one exception is `/classify`: it runs in
-your current agent and launches one `abap-classifier` subagent per batch from there, because a subagent may not
-launch further subagents on older OpenCode versions (the `subagent_depth` setting only exists from 1.18.5 on).
-Its own output in your conversation is just the three script summary lines and the batch reports.
+Start `opencode` in this folder, pick your model once with `/models`, and stay in the default agent. Every
+project command runs in that agent with that model. The LLM stages are delegated to subagents through the Task
+tool (`abap-splitter`, `abap-classifier` one per batch, `abap-reviewer`, `abap-architect`); they inherit the
+same model, so nothing in the project names a model or an agent.
 
 | Command | What it does | Output |
 |---|---|---|
@@ -76,17 +72,13 @@ unfiltered `/explorer` then shows them.
 - All runs are idempotent. To redo one batch delete `work/llm/<id>.json`; to start over delete `work/`.
 
 ### Models
-| Where | Model |
-|---|---|
-| orchestrator, `/classify` batches (`abap-classifier`), `abap-splitter` | `azure/az-gpt-5.6-terra` |
-| `/review` (`abap-reviewer`), `/target-packages` (`abap-architect`) | `azure/az-gpt-5.6-sol` |
-| `/inventory`, `/explorer`, `/tree`, `/status` summaries, `small_model` | `azure/az-gpt-5.6-luna` |
-
-Change them in the `model:` line of `.opencode/agents/*.md` / `.opencode/commands/*.md` or in `opencode.json`.
-The ids assume the Azure OpenAI provider is registered in OpenCode as `azure`; if yours uses another provider
-id, replace the `azure/` prefix in those files (the deployment names `az-gpt-5.6-*` stay).
-For a cheaper first pass set the classifier to Luna; for a final pass on weak objects set it to Sol and run
-`/classify --min-confidence 0.6`.
+Nothing is pinned. The model you select in the TUI (`/models`) is used by the commands and inherited by the
+subagents. If you want different models per stage (for example a strong, slow model only for `/review` and
+`/target-packages`), add a `model:` line to the frontmatter of `.opencode/agents/abap-reviewer.md` and
+`abap-architect.md` with the id exactly as `opencode models` prints it (`<provider>/<model-id>`). A wrong id
+fails with "model not found"; leaving the line out can never fail.
+For a cheaper first pass run `/classify` with a small model selected; for a final pass on weak objects switch
+to the strong model and run `/classify --min-confidence 0.6`.
 
 ## Business process view
 Besides the SAP module, every object gets business-process assignments in the style of SAP's Reference
@@ -111,7 +103,7 @@ against the taxonomy. Details: `.opencode/skills/classification-rules/SKILL.md`.
 ## Layout
 ```
 opencode.json  AGENTS.md  migration.config.json
-.opencode/agents/     sap-migration (orchestrator subagent), abap-splitter, abap-classifier, abap-reviewer, abap-architect
+.opencode/agents/     abap-splitter, abap-classifier, abap-reviewer, abap-architect
 .opencode/commands/   inspect-chunks, unchunk, inventory, classify, review, explorer, tree, target-packages, status
 .opencode/skills/     sap-module-taxonomy, abapgit-layout, classification-rules
 tools/                unchunk, inventory, evidence, prep_batches, merge, overlaps, review_candidates,

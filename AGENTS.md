@@ -19,9 +19,8 @@ find overlaps between the systems, and propose the target package design for the
 - Taxonomy ids (`tools/taxonomy/nodes.json`) are the contract between all stages. Do not invent ids.
   Company-specific rules go in `tools/taxonomy/rules_custom.json`, never in the shipped rule files.
 - Process at most `classification.batches_per_run` batches per `/classify`; report the remainder.
-- Every `/command` except `/classify` runs as a subagent (`subtask: true`); the user only sees its final message,
-  so the command's report must be complete. `/classify` runs in the primary agent and launches the
-  `abap-classifier` subagents itself (no nested subagents, which older OpenCode versions do not allow).
+- Every `/command` runs in the user's current (default) agent with the model selected in the TUI. The LLM
+  stages are delegated to the `abap-*` subagents with the Task tool; the subagents inherit that model.
 - Do not load `work/classification.json` or whole source folders into the conversation. Use
   `py tools/status.py` or a short Python one-liner for numbers.
 
@@ -43,9 +42,10 @@ find overlaps between the systems, and propose the target package design for the
 | `output/target_packages.md`, `output/object_moves.csv` | proposed S/4 package design and move list |
 
 ## Models
-Default (orchestrator, classifier batches): `azure/az-gpt-5.6-terra`. One-shot judgment stages
-(`abap-reviewer`, `abap-architect`): `azure/az-gpt-5.6-sol`. Trivial summaries and `small_model`:
-`azure/az-gpt-5.6-luna`. Change them in the agent frontmatter under `.opencode/agents/` or in `opencode.json`.
+No model is pinned anywhere in this project (no `model:` lines in `.opencode/`, no `model` in `opencode.json`).
+Everything runs with the model selected in the OpenCode TUI (`/models`) and the subagents inherit it. To pin
+one, add `model: <provider>/<model-id>` to an agent's frontmatter or `"model"` to `opencode.json`, using an id
+exactly as `opencode models` prints it.
 
 ## Resuming after an interruption
 Every stage is idempotent. Re-run the same command. `/classify` skips batches that already have a result

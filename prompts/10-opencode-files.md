@@ -8,28 +8,24 @@
 
 ## Task
 
-Write `opencode.json`, the five agent files, the nine command files, the three skills, `AGENTS.md` and `README.md` as specified in section 11. Use the Azure model ids `azure/az-gpt-5.6-terra|sol|luna` and say in the README where to change the provider prefix. Agent prompts must match the JSON contracts of step 08 exactly (field names, allowed values).
+Write `opencode.json`, the four agent files, the nine command files, the three skills, `AGENTS.md` and `README.md` as specified in section 11. Pin no model anywhere (no `model` keys or `model:` lines): the TUI-selected model is used by the commands and inherited by the subagents. Agent prompts must match the JSON contracts of step 08 exactly (field names, allowed values).
 
 ## Specification
 
 ## 11. OpenCode files
 
-`opencode.json`: `$schema https://opencode.ai/config.json`, `model "azure/az-gpt-5.6-terra"`,
-`small_model "azure/az-gpt-5.6-luna"`, `instructions ["AGENTS.md"]`, `permission.edit {"*": deny,
+`opencode.json`: `$schema https://opencode.ai/config.json`, NO `model`/`small_model` keys (the TUI-selected
+model is used everywhere; older OpenCode versions reject unknown keys, so add nothing else), `instructions ["AGENTS.md"]`, `permission.edit {"*": deny,
 "work/**": allow, "output/**": allow, "migration.config.json": ask, "tools/taxonomy/rules_custom.json": ask}`,
 `permission.shell {"*": ask, "py tools/*": allow, "py -I tools/*": allow, dir/ls/type/cat/findstr/grep/wc/
 head/tail *: allow}`, `webfetch deny`, `task {"*": deny, "abap-*": allow}`.
 
-Agents (`.opencode/agents/<name>.md`, frontmatter `description`, `mode`, `model`, `temperature`, `steps`,
-`permission` with the same edit/shell/task keys):
-- `sap-migration` (subagent orchestrator, terra, 0.2): orchestrator. Body: roots are read-only; run the Python tools and
-  read their `*_OK` line; LLM work only via subagents on prepared files; never classify inline; everything
-  resumable; process at most `batches_per_run` batches per /classify and report the remainder; taxonomy ids
-  are the contract; answer data questions with status.py or a one-liner, never by loading big files; the
-  stage list 0-7; report style short with a small table and the next command.
-- `abap-splitter` (subagent, terra, 0.1, edit only work/unchunk_resolution.json): names unresolved
+Agents (`.opencode/agents/<name>.md`, frontmatter `description`, `mode: subagent`, `temperature`, `steps`,
+`permission` with the same edit/shell/task keys; NO `model` line, the subagent inherits the caller's model).
+There is no orchestrator agent: the commands run in the user's default agent and AGENTS.md carries the rules.
+- `abap-splitter` (0.1, edit only work/unchunk_resolution.json): names unresolved
   segments; rules for PROG/CLAS/INTF/FUGR/FUNC/SKIP as in section 6; never invent a name.
-- `abap-classifier` (subagent, terra, 0.1, steps 12, edit only work/llm/**): reads one batch file; decides
+- `abap-classifier` (0.1, steps 12, edit only work/llm/**): reads one batch file; decides
   by evidence strength in this order: enhancement targets, standard tables, standard FMs/classes, logical
   DB/infotypes/macros, transactions/message classes/auth objects, dependency hints, names and comments
   (package names are often WRONG, weak hint, flag mislabeled-package). Rules: HR approval workflows ->
@@ -39,40 +35,34 @@ Agents (`.opencode/agents/<name>.md`, frontmatter `description`, `mode`, `model`
   defensible level, null rather than guess; UNKNOWN only with no evidence and confidence <= 0.3;
   confidence calibration 0.9+ / 0.7-0.9 / 0.5-0.7 / < 0.5; purpose is one business sentence a manager
   understands. Output exactly `work/llm/<batch_id>.json` per 8.3, every object exactly once.
-- `abap-reviewer` (subagent, sol, 0.1, steps 20, edit only work/review_patch.json and work/review.md):
+- `abap-reviewer` (0.1, steps 20, edit only work/review_patch.json and work/review.md):
   consistency rules (same name same purpose -> same class in all systems; one FUGR -> one module unless
   genuinely mixed; package outliers need positive evidence; helpers per usage; HR workflows -> HCM-WF;
   UNKNOWN only with empty evidence, flag needs-human); writes patch (corrections only) and a report with
   systematic problems and up to 20 objects for a human.
-- `abap-architect` (subagent, sol, 0.2, steps 20, edit only output/target_packages.md): writes the target
+- `abap-architect` (0.2, steps 20, edit only output/target_packages.md): writes the target
   design with sections executive summary (table), naming convention (prefix, depth, where utilities,
   interfaces and company-specific variants live, `_<COMPANY>` suffix packages), hierarchy with counts (merge
   areas < 5 objects into the submodule), overlap resolution rules (identical keep one; diverged top 30 with
   rename-and-keep vs merge-behind-switch; similar review list), triage backlog by package, migration
   sequence from uses/used_by, numbered open decisions. Cite real names and counts, under ~4 pages.
 
-Commands (`.opencode/commands/<name>.md`, frontmatter `description`, `agent`, `subtask: true`, optional
-`model`): every command except `classify` runs as a subagent, so the user sees only its final report. Shell
-output is injected with `` !`py tools/<script>.py --config migration.config.json $ARGUMENTS` ``, then
-instructions. `agent` is `sap-migration` (a `mode: subagent` orchestrator, terra) unless stated; single-shot
-LLM stages run directly as their subagent. `classify` has no `agent` line and `subtask: false`: it runs in the
-user's current agent and launches the classifier subagents from there, because nested subagents are not
-available on every OpenCode version (do NOT put `subagent_depth` in opencode.json; older versions reject
-unknown keys). `permission.task` in opencode.json allows `abap-*` and `sap-migration`.
-- `inspect-chunks` (luna): unchunk.py --inspect $ARGUMENTS; relay; propose an object_marker regex if none.
-- `unchunk` (agent abap-splitter): unchunk.py; if unresolved > 0 resolve the segments itself, then run
-  `--apply-resolution`; next /inventory.
-- `inventory` (luna): inventory.py; table of counts; next /classify.
+Commands (`.opencode/commands/<name>.md`, frontmatter `description` only: no `agent`, `model` or `subtask`,
+so every command runs in the user's current agent with the TUI-selected model): shell output is injected with
+`` !`py tools/<script>.py --config migration.config.json $ARGUMENTS` ``, then instructions; LLM stages are
+delegated with the Task tool to the `abap-*` subagents, which `permission.task` in opencode.json allows.
+- `inspect-chunks`: unchunk.py --inspect $ARGUMENTS; relay; propose an object_marker regex if none.
+- `unchunk`: unchunk.py; if unresolved > 0 invoke abap-splitter via Task, then `--apply-resolution`; next /inventory.
+- `inventory`: inventory.py; table of counts; next /classify.
 - `classify`: evidence.py; prep_batches.py $ARGUMENTS; pending.py; then invoke abap-classifier once per id
   on the THIS_RUN line, in parallel Task calls, prompt "Classify batch work/batches/<id>.json and write
-  work/llm/<id>.json."; then
-  merge.py and overlaps.py; report counts, merge errors, overlaps, remaining batches ("run /classify again or
-  loop it"); if nothing pending, just merge and overlaps.
-- `review` (agent abap-reviewer): review_candidates.py; do the review itself; merge.py --apply-review;
-  overlaps.py; report.
-- `explorer` (luna): render_html.py $ARGUMENTS; report path/size.  `tree` (luna): render_tree.py.
-- `target-packages` (agent abap-architect): target_skeleton.py $ARGUMENTS; write the design itself; report.
-- `status` (luna): status.py; repeat NEXT.
+  work/llm/<id>.json."; then merge.py and overlaps.py; report counts, merge errors, overlaps, remaining
+  batches ("run /classify again or loop it"); if nothing pending, just merge and overlaps.
+- `review`: review_candidates.py; invoke abap-reviewer once; merge.py --apply-review; overlaps.py; report.
+- `explorer`: render_html.py $ARGUMENTS; report path/size.  `tree`: render_tree.py.
+- `target-packages`: target_skeleton.py $ARGUMENTS; invoke abap-architect once; report.
+- `status`: status.py; repeat NEXT.
+Every command ends with a short report: numbers in a small table, then the next command to run.
 
 Skills (`.opencode/skills/<name>/SKILL.md`, frontmatter `name`, `description`): `sap-module-taxonomy`
 (table of modules and signals, placement rules for ambiguous code, how to add rules_custom.json),
@@ -87,4 +77,4 @@ models (provider prefix note), how classification works, layout.
 
 ## Acceptance check
 
-Start `opencode` in the folder: the `sap-migration` agent is the primary agent, `/inventory`, `/classify`, `/review`, `/explorer`, `/tree`, `/target-packages`, `/status`, `/unchunk`, `/inspect-chunks` appear, and `@abap-classifier` is listed. `grep -r "openai/" .opencode opencode.json` finds nothing. Then run `/status` against the fixture config copied to `migration.config.json` and confirm it prints a NEXT line.
+Start `opencode` in the folder in the default agent: `/inventory`, `/classify`, `/review`, `/explorer`, `/tree`, `/target-packages`, `/status`, `/unchunk`, `/inspect-chunks` appear, and `@abap-classifier` is listed. `grep -r "openai/" .opencode opencode.json` finds nothing. Then run `/status` against the fixture config copied to `migration.config.json` and confirm it prints a NEXT line.

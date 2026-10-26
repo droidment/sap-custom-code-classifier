@@ -14,7 +14,7 @@ Run these in order, one per OpenCode session (or one after another in the same s
 | [07](07-evidence-and-batches.md) | Stage 2a/2b: evidence scoring, propagation, batches | `py -I tools/evidence.py --config tools/tests/fixtures/migration.config.json` prints `EVID... |
 | [08](08-merge-overlaps-review.md) | Stage 2c/2d/3a: merge, overlaps, review candidates | On the fixtures: merge reports `llm_invalid=1`; the classification carries secondary, proc... |
 | [09](09-outputs.md) | Stage 4/5: explorer, tree, CSV, target packages, status | All four tests pass. Open `tools/tests/_tmp/output/explorer.html` in a browser: no console... |
-| [10](10-opencode-files.md) | OpenCode agents, commands, skills and project docs | Start `opencode` in the folder: the `sap-migration` agent is the primary agent, `/inventor... |
+| [10](10-opencode-files.md) | OpenCode agents, commands, skills and project docs | Start `opencode` in the folder in the default agent: `/inventory`, `/classify`, `/review`,... |
 | [11](11-verification-and-handover.md) | End-to-end verification and handover checklist | 1. `py -I tools/tests/test_pipeline.py`: 4 tests, all OK.... |
 
 The master specification these were cut from is `../REBUILD_PROMPT.md`; it stays the reference if a step prompt and the master ever disagree.

@@ -1,7 +1,5 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "azure/az-gpt-5.6-terra",
-  "small_model": "azure/az-gpt-5.6-luna",
   "instructions": [
     "AGENTS.md"
   ],
@@ -30,8 +28,7 @@
     "webfetch": "deny",
     "task": {
       "*": "deny",
-      "abap-*": "allow",
-      "sap-migration": "allow"
+      "abap-*": "allow"
     }
   }
 }
