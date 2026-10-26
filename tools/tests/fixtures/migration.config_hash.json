@@ -1,0 +1,9 @@
+{
+  "systems": [
+    { "id": "SYSD", "company": "Fixture Company D (###OBJECT chunks)", "root": "SYS_D", "format": "chunks", "chunk_glob": "*.abapchunk", "object_marker": null }
+  ],
+  "work_dir": "../_tmp_hash/work",
+  "output_dir": "../_tmp_hash/output",
+  "taxonomy": "../../taxonomy",
+  "classification": { "auto_min_score": 6.0, "auto_min_margin": 3.0, "batch_size": 5 }
+}

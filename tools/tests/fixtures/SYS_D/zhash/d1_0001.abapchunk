@@ -1,0 +1,17 @@
+###OBJECT          D66:PROG:ZD_REPORT     PROG    ZD_REPORT
+*&---------------------------------------------------------------------*
+*& Report ZHR_TS_REPORT
+*& Weekly timesheet hours per employee for the HR time administrators
+*&---------------------------------------------------------------------*
+REPORT zd_report MESSAGE-ID zhr.
+TABLES: pernr.
+INFOTYPES: 0001, 0002.
+DATA: lt_cats TYPE TABLE OF catsdb,
+      ls_log  TYPE zhrts_log,
+      lo_util TYPE REF TO zcl_util_string.
+SELECT-OPTIONS: s_date FOR sy-datum.
+GET pernr.
+  rp_provide_from_last p0001 space pn-begda pn-endda.
+  SELECT * FROM catsdb INTO TABLE lt_cats
+    WHERE pernr = pernr-pernr AND workdate IN s_date AND status = '30'.
+  LO

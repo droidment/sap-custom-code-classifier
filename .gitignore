@@ -3,5 +3,6 @@ output/
 __pycache__/
 *.pyc
 tools/tests/_tmp/
+tools/tests/_tmp_hash/
 sapclassificationproposal/
 *.zip

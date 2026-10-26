@@ -39,8 +39,9 @@ Some systems are exported as plain-text chains: one folder per package (`ZDEV/`)
 files; objects are separated by marker lines; there is no metadata.
 
 `tools/unchunk.py` (command `/unchunk`) concatenates the chunks of each package in numeric order, detects the
-marker pattern (config `object_marker`, else built-ins: `*** OBJECT <TYPE> <NAME>` comments, `*& Report X`
-header boxes, or plain `REPORT` / `CLASS x DEFINITION` / `INTERFACE x PUBLIC` / `FUNCTION-POOL` statements),
+marker pattern (config `object_marker`, else built-ins: `###OBJECT SYS:TYPE:NAME` lines (SAP-side export; its
+`###END_OBJECT` lines are dropped and `* ###END_PROGRAM SAPLxxx` names the function group of a FUNC),
+`*** OBJECT <TYPE> <NAME>` comments, `*& Report X` header boxes, or plain `REPORT` / `CLASS x DEFINITION` / `INTERFACE x PUBLIC` / `FUNCTION-POOL` statements),
 splits into segments, assembles objects (DEFINITION + IMPLEMENTATION of one class merge; `FUNCTION ...
 ENDFUNCTION` blocks attach to the preceding `FUNCTION-POOL`, or to a synthetic group named from the FM prefix
 with flag `synthetic_fugr`) and writes the abapGit-style files above into `work/unchunked/<SYS>/<package>/`.

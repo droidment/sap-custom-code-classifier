@@ -216,7 +216,9 @@ For each system with `format: chunks`:
    group by prefix, sort numerically, warn on gaps; **concatenate raw strings with no separator** (a chunk
    may end mid-line). Decode with `read_text`.
 2. Detect the marker: `object_marker` from config (regex, named groups `type` optional and `name`), else the
-   first built-in with >= 2 hits in the first 200k chars:
+   first built-in with >= 2 hits in the first 200k chars (second pass accepts >= 1 hit):
+   `^#{2,}\s*OBJECT(?:[\s:]*(?:[A-Z0-9_]+:)?(?P<type>[A-Z]{4})[:\s]*(?P<name>/?[A-Z][A-Z0-9_/]+)?)?` (hash_object,
+   for `###OBJECT   D66:FUNC:Y2F_X   FUNC   Y2F_X` lines);
    `^\*{2,}\s*(?:OBJECT|OBJ|BEGIN)(?:\s+OF)?\b[:\s]*(?P<type>[A-Z]{4}\b)?[:\s]*(?P<name>/?[A-Z][A-Z0-9_/]+)?`;
    `^[\*"]\s*#{2,}\s*(?P<type>[A-Z]{4}\b)?\s*(?P<name>...)?`; `^\*&\s*(?:Report|Include|Program)\s+(?P<name>\S+)`;
    `^(?:REPORT|PROGRAM|FUNCTION-POOL)\s+(?P<name>...)|^CLASS\s+(?P<name2>...)\s+DEFINITION\b(?!.*\b(?:LOCAL|DEFERRED|LOAD)\b)|^INTERFACE\s+(?P<name3>...)\s+PUBLIC`.

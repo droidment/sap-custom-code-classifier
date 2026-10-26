@@ -47,7 +47,8 @@ Suggested order for the management report: (`/unchunk` for chunked systems) -> `
 `tools/unchunk.py` concatenates each package's chunks in numeric order (warns on gaps), auto-detects the
 marker line that starts each object (or uses `object_marker` from the config: a regex with named groups
 `type` (optional) and `name`), rebuilds programs, classes, interfaces and function groups (FUNCTION blocks
-attach to the preceding FUNCTION-POOL, otherwise to a synthetic group flagged `synthetic_fugr`), takes the
+attach to the group named by a `* ###END_PROGRAM SAPLxxx` line, else to the preceding FUNCTION-POOL, else to a
+synthetic group flagged `synthetic_fugr`), takes the
 description from the first header comment, and writes `_manifest.jsonl`. Segments it cannot name are listed
 in `work/unchunk_unresolved.json`; `/unchunk` hands those to the `abap-splitter` subagent and applies its
 answers. Re-runs only rebuild packages whose chunk files changed.

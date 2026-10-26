@@ -17,11 +17,13 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 TOOLS = HERE.parent
 CFG = HERE / "fixtures" / "migration.config.json"
+CFG_HASH = HERE / "fixtures" / "migration.config_hash.json"
 TMP = HERE / "_tmp"
+TMP_HASH = HERE / "_tmp_hash"
 
 
-def run(script: str, *args: str) -> str:
-    cmd = [sys.executable, "-I", str(TOOLS / script), "--config", str(CFG), *args]
+def run(script: str, *args: str, cfg: Path = CFG) -> str:
+    cmd = [sys.executable, "-I", str(TOOLS / script), "--config", str(cfg), *args]
     res = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     if res.returncode != 0:
         raise AssertionError(f"{script} failed:\nSTDOUT {res.stdout}\nSTDERR {res.stderr}")
@@ -31,8 +33,9 @@ def run(script: str, *args: str) -> str:
 class PipelineTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        if TMP.exists():
-            shutil.rmtree(TMP)
+        for d in (TMP, TMP_HASH):
+            if d.exists():
+                shutil.rmtree(d)
         subprocess.run([sys.executable, "-I", str(HERE / "make_fixtures.py")], check=True)
         cls.work = TMP / "work"
         cls.out = TMP / "output"
@@ -68,6 +71,31 @@ class PipelineTest(unittest.TestCase):
         self.assertIn("applied=1", out)
         self.assertTrue((self.work / "unchunked" / "SYSC" / "zchunked" / "zfragment.prog.abap").exists())
         self.assertEqual(json.loads((self.work / "unchunk_unresolved.json").read_text(encoding="utf-8"))["segments"], [])
+
+    def test_00b_unchunk_hash_object_markers(self):
+        """'###OBJECT D66:FUNC:NAME' markers, ###END_OBJECT dropped, FUGR named from '* ###END_PROGRAM SAPLZDFG'."""
+        out = run("unchunk.py", "--inspect", "SYSD", cfg=CFG_HASH)
+        self.assertIn("hash_object", out)
+        out = run("unchunk.py", cfg=CFG_HASH)
+        self.assertIn("UNCHUNK_OK", out)
+        self.assertIn("unresolved=0", out)
+        rows = self.load_jsonl(TMP_HASH / "work" / "unchunked" / "SYSD" / "_manifest.jsonl")
+        got = {(r["type"], r["name"]) for r in rows}
+        self.assertEqual(got, {("PROG", "ZD_REPORT"), ("FUGR", "ZDFG"), ("CLAS", "ZCL_D_HELPER")})
+        fugr = next(r for r in rows if r["type"] == "FUGR")
+        self.assertEqual(fugr["fms"], ["Z_D_AUTH_CHECK", "Z_D_AUTH_LOG"])
+        self.assertIn("fugr_from_end_marker", fugr["flags"])
+        self.assertNotIn("synthetic_fugr", fugr["flags"])
+        pkg = TMP_HASH / "work" / "unchunked" / "SYSD" / "zhash"
+        for f in pkg.glob("*.abap"):
+            txt = f.read_text(encoding="utf-8")
+            self.assertNotIn("###END_OBJECT", txt, f.name)
+            self.assertNotIn("###OBJECT", txt, f.name)
+        self.assertTrue((pkg / "zdfg.fugr.z_d_auth_check.abap").exists())
+        out = run("inventory.py", cfg=CFG_HASH)
+        self.assertIn("INVENTORY_OK", out)
+        inv = {r["key"]: r for r in self.load_jsonl(TMP_HASH / "work" / "inventory.jsonl")}
+        self.assertEqual([c["name"] for c in inv["SYSD|FUGR|ZDFG"]["children"]], ["Z_D_AUTH_CHECK", "Z_D_AUTH_LOG"])
 
     def test_01_inventory(self):
         run("unchunk.py")

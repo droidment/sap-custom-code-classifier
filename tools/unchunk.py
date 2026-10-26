@@ -32,8 +32,10 @@ CHUNK_RE = re.compile(r"^(?P<prefix>.+?)_(?P<num>\d+)\.[^.]+$", re.IGNORECASE)
 # Each has a named group 'name' and optionally 'type'.
 BUILTIN_MARKERS: List[Tuple[str, str]] = [
     # type and name are optional so that a marker without them still starts a segment (-> unresolved)
+    # '###OBJECT   D66:FUNC:Y2F_NAME   FUNC   Y2F_NAME' (SAP-side export with ###END_OBJECT / * ###END_PROGRAM lines)
+    ("hash_object", r"^#{2,}\s*OBJECT\b(?:[\s:]*(?:[A-Z0-9_]+:)?(?P<type>[A-Z]{4})\b[:\s]*(?P<name>/?[A-Z][A-Z0-9_/]+)?)?"),
     ("object_comment", r"^\*{2,}\s*(?:OBJECT|OBJ|BEGIN)(?:\s+OF)?\b[:\s]*(?P<type>[A-Z]{4}\b)?[:\s]*(?P<name>/?[A-Z][A-Z0-9_/]+)?"),
-    ("hash_comment", r"^[\*\"]\s*#{2,}\s*(?P<type>[A-Z]{4}\b)?\s*(?P<name>/?[A-Z][A-Z0-9_/]+)?"),
+    ("hash_comment", r"^[\*\"]\s*#{2,}\s*(?!END_)(?P<type>[A-Z]{4}\b)?\s*(?P<name>/?[A-Z][A-Z0-9_/]+)?"),
     ("header_box", r"^\*&\s*(?:Report|Include|Program|Modulpool|Module pool)\s+(?P<name>/?[A-Z0-9_/]+)"),
     ("statement", r"^(?:REPORT|PROGRAM|FUNCTION-POOL)\s+(?P<name>/?[A-Z0-9_/]+)\b|^CLASS\s+(?P<name2>/?[A-Z0-9_/]+)\s+DEFINITION\b(?!.*\b(?:LOCAL|DEFERRED|LOAD)\b)|^INTERFACE\s+(?P<name3>/?[A-Z0-9_/]+)\s+PUBLIC\b"),
 ]
@@ -48,6 +50,9 @@ RX_INTF = re.compile(r"^INTERFACE\s+(/?[A-Z0-9_/]+)\s+PUBLIC\b", re.I)
 RX_FUNC = re.compile(r"^FUNCTION\s+(/?[A-Z0-9_/]+)\s*\.", re.I)
 RX_ENDFUNC = re.compile(r"^ENDFUNCTION\s*\.", re.I)
 RX_INCLUDE_BOX = re.compile(r"^\*&\s*Include\s+(/?[A-Z0-9_/]+)", re.I)
+RX_END_OBJECT = re.compile(r"^#{2,}\s*END_OBJECT\b", re.I)                       # not ABAP: dropped from the object text
+RX_END_PROGRAM = re.compile(r"^[\*\"]?\s*#{2,}\s*END_PROGRAM\s+(/?[A-Z0-9_/]+)", re.I)  # main program of the object
+RX_SAPL = re.compile(r"^(/[A-Z0-9_]+/)?SAPL([A-Z0-9_]+)$", re.I)
 DECOR = re.compile(r"^[\*&\-=_ \t]*$")
 
 
@@ -107,10 +112,11 @@ def concatenate(files: Iterable[Path]) -> str:
 def detect_marker(sample: str, configured: Optional[str]) -> Optional[Tuple[str, re.Pattern]]:
     if configured:
         return "config", re.compile(configured, re.I | re.M)
-    for name, pat in BUILTIN_MARKERS:
-        rx = re.compile(pat, re.I | re.M)
-        if len(rx.findall(sample)) >= 2:
-            return name, rx
+    for minimum in (2, 1):        # prefer a pattern that repeats; a one-object package still gets its marker
+        for name, pat in BUILTIN_MARKERS:
+            rx = re.compile(pat, re.I | re.M)
+            if len(rx.findall(sample)) >= minimum:
+                return name, rx
     return None
 
 
@@ -131,9 +137,11 @@ def split_segments(text: str, rx: Optional[re.Pattern]) -> List[Segment]:
                 segs.append(cur)
             mtype, mname = _marker_fields(m)
             cur = Segment(seq=len(segs) + 1, marker=line.strip(), mtype=mtype, mname=mname, start_line=no)
-            # statement-style markers are part of the object; comment-style markers are not
-            if not line.lstrip().startswith(("*", '"')):
+            # statement-style markers are part of the object; comment- and ###-style markers are not
+            if not line.lstrip().startswith(("*", '"', "#")):
                 cur.lines.append(line)
+            continue
+        if RX_END_OBJECT.match(line):
             continue
         cur.lines.append(line)
     if cur.lines and not all(DECOR.match(l) for l in cur.lines):
@@ -182,6 +190,16 @@ def infer_type(seg: Segment) -> Tuple[Optional[str], Optional[str], List[str]]:
     return None, None, flags
 
 
+def fugr_from_end_program(lines: List[str]) -> Optional[str]:
+    """'* ###END_PROGRAM SAPLZFG' inside a function module segment names its function group ZFG."""
+    for l in reversed(lines[-50:]):
+        m = RX_END_PROGRAM.match(l.strip())
+        if m:
+            sm = RX_SAPL.match(m.group(1).upper())
+            return (sm.group(1) or "") + sm.group(2) if sm else None
+    return None
+
+
 def synthetic_fugr_name(fm: str) -> str:
     parts = fm.split("_")
     if len(parts) >= 3:
@@ -217,9 +235,13 @@ def assemble(segments: List[Segment], pkg: str) -> Tuple[List[ObjectOut], List[S
         otype = otype.upper()
         if otype == "FUNC":
             fm_name = iname or name
-            fg = current_fugr or synthetic_fugr_name(fm_name)
+            hinted = fugr_from_end_program(seg.lines)
+            fg = hinted or current_fugr or synthetic_fugr_name(fm_name)
             o = get("FUGR", fg)
-            if not current_fugr and "synthetic_fugr" not in o.flags:
+            if hinted:
+                if "fugr_from_end_marker" not in o.flags:
+                    o.flags.append("fugr_from_end_marker")
+            elif not current_fugr and "synthetic_fugr" not in o.flags:
                 o.flags.append("synthetic_fugr")
             o.fms.append((fm_name, first_description(seg.lines), seg.lines))
             o.seg_range = (o.seg_range[0] or seg.seq, seg.seq)

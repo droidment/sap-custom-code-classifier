@@ -236,6 +236,23 @@ def main() -> None:
         p = FIX / f"SYS_C/zchunked/z1_{i // size + 1:04d}.abapchunk"
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(stream[i: i + size], encoding="utf-8", newline="")   # raw: a chunk may end mid-line
+    # ---- SYS_D: '###OBJECT SYS:TYPE:NAME' export with ###END_OBJECT and * ###END_PROGRAM lines ----
+    def hobj(otype: str, name: str, body: str, prog: str) -> str:
+        return (f"###OBJECT          D66:{otype}:{name}     {otype}    {name}\n" + body.strip() + "\n"
+                f"* ###END_PROGRAM {prog}\n###END_OBJECT\n")
+    stream = (
+        hobj("PROG", "ZD_REPORT", HR_TS_REPORT.replace("zhr_ts_report", "zd_report"), "ZD_REPORT")
+        + hobj("FUNC", "Z_D_AUTH_CHECK", "FUNCTION z_d_auth_check.\n*\"  Checks authorization objects\n"
+               "  AUTHORITY-CHECK OBJECT 'S_TCODE' ID 'TCD' FIELD iv_tcode.\n  SELECT SINGLE * FROM usr02 INTO @DATA(ls_u) WHERE bname = @sy-uname.\nENDFUNCTION.", "SAPLZDFG")
+        + hobj("FUNC", "Z_D_AUTH_LOG", "FUNCTION z_d_auth_log.\n*\"  Logs authorization failures\n"
+               "  INSERT zd_auth_log FROM @is_log.\nENDFUNCTION.", "SAPLZDFG")
+        + hobj("CLAS", "ZCL_D_HELPER", UTIL_CLASS.replace("zcl_util_string", "zcl_d_helper"), "ZCL_D_HELPER=================CP")
+    )
+    size = 700
+    for i in range(0, len(stream), size):
+        p = FIX / f"SYS_D/zhash/d1_{i // size + 1:04d}.abapchunk"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(stream[i: i + size], encoding="utf-8", newline="")
     print(f"fixtures written under {FIX}")
 
 
