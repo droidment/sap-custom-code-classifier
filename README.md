@@ -21,14 +21,14 @@ library only. The LLM is used only for the objects the heuristics cannot settle,
 5. Smoke test without any LLM: `py tools/tests/test_pipeline.py` (runs on synthetic fixtures).
 
 ## Running
-Start `opencode` in this folder and stay in your normal (build) agent. Every project command runs as a
-subagent (`subtask: true` in `.opencode/commands/*.md`): the deterministic script output and the LLM work stay
-in that subagent's context, and only its final report comes back to your conversation. `/unchunk`, `/review`
-and `/target-packages` run directly as `abap-splitter`, `abap-reviewer` and `abap-architect`; `/classify` runs as
-the `sap-migration` orchestrator, which launches one `abap-classifier` subagent per batch. That second level
-needs `"subagent_depth": 2` in `opencode.json` (shipped). On an OpenCode version that does not know
-`subagent_depth`, delete that key and remove `subtask: true` from `.opencode/commands/classify.md`; `/classify`
-then runs in your current agent and still launches the classifier subagents.
+Start `opencode` in this folder and stay in your normal (build) agent. The project commands run as subagents
+(`subtask: true` in `.opencode/commands/*.md`): script output and LLM work stay in the subagent's context and
+only its final report comes back to your conversation. `/unchunk`, `/review` and `/target-packages` run directly
+as `abap-splitter`, `abap-reviewer` and `abap-architect`; `/inventory`, `/explorer`, `/tree`, `/status` and
+`/inspect-chunks` run as the `sap-migration` orchestrator subagent. The one exception is `/classify`: it runs in
+your current agent and launches one `abap-classifier` subagent per batch from there, because a subagent may not
+launch further subagents on older OpenCode versions (the `subagent_depth` setting only exists from 1.18.5 on).
+Its own output in your conversation is just the three script summary lines and the batch reports.
 
 | Command | What it does | Output |
 |---|---|---|

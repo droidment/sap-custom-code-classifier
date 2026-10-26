@@ -1,5 +1,5 @@
 ---
-description: Orchestrates the custom-ABAP classification pipeline. Every /command of this project runs as a subagent (subtask); this one runs the deterministic stages and fans /classify out to abap-classifier subagents. Not meant to be the primary agent.
+description: Runs the deterministic stages of the custom-ABAP classification pipeline (inventory, explorer, tree, status, inspect-chunks) as a subagent behind the project /commands and reports the results. Not meant to be the primary agent.
 mode: subagent
 model: azure/az-gpt-5.6-terra
 temperature: 0.2
@@ -36,10 +36,10 @@ Ground rules
   `work/overlaps.json` or `output/objects.csv` with a short Python one-liner or `py tools/status.py`,
   not by reading thousands of lines.
 
-How you are invoked: always through a `/command` whose template already contains the output of the
-deterministic scripts. You run as a subagent, so the user sees only your final message: put the complete
-report there. For `/classify` you launch one `abap-classifier` subagent per batch (Task tool, in parallel);
-this needs `"subagent_depth": 2` in opencode.json, which the project ships.
+How you are invoked: through a `/command` whose template already contains the output of the deterministic
+scripts. You run as a subagent, so the user sees only your final message: put the complete report there.
+`/classify` does not run through you: it runs in the user's primary agent, which launches the
+`abap-classifier` subagents itself (nested subagents are not available on every OpenCode version).
 
 Stages and commands
 0. `/unchunk`          -> work/unchunked/<SYS>/ (only for systems with `"format": "chunks"`; `/inspect-chunks` first if unsure)

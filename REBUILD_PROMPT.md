@@ -449,18 +449,20 @@ Agents (`.opencode/agents/<name>.md`, frontmatter `description`, `mode`, `model`
   sequence from uses/used_by, numbered open decisions. Cite real names and counts, under ~4 pages.
 
 Commands (`.opencode/commands/<name>.md`, frontmatter `description`, `agent`, `subtask: true`, optional
-`model`): every command runs as a subagent, so the user sees only its final report. Shell output is injected
-with `` !`py tools/<script>.py --config migration.config.json $ARGUMENTS` ``, then instructions. `agent` is
-`sap-migration` (a `mode: subagent` orchestrator, terra) unless stated; single-shot LLM stages run directly as
-their subagent. `opencode.json` sets top-level `"subagent_depth": 2` so the `/classify` orchestrator may
-launch classifier subagents, and `permission.task` allows `abap-*` and `sap-migration`.
+`model`): every command except `classify` runs as a subagent, so the user sees only its final report. Shell
+output is injected with `` !`py tools/<script>.py --config migration.config.json $ARGUMENTS` ``, then
+instructions. `agent` is `sap-migration` (a `mode: subagent` orchestrator, terra) unless stated; single-shot
+LLM stages run directly as their subagent. `classify` has no `agent` line and `subtask: false`: it runs in the
+user's current agent and launches the classifier subagents from there, because nested subagents are not
+available on every OpenCode version (do NOT put `subagent_depth` in opencode.json; older versions reject
+unknown keys). `permission.task` in opencode.json allows `abap-*` and `sap-migration`.
 - `inspect-chunks` (luna): unchunk.py --inspect $ARGUMENTS; relay; propose an object_marker regex if none.
 - `unchunk` (agent abap-splitter): unchunk.py; if unresolved > 0 resolve the segments itself, then run
   `--apply-resolution`; next /inventory.
 - `inventory` (luna): inventory.py; table of counts; next /classify.
 - `classify`: evidence.py; prep_batches.py $ARGUMENTS; pending.py; then invoke abap-classifier once per id
   on the THIS_RUN line, in parallel Task calls, prompt "Classify batch work/batches/<id>.json and write
-  work/llm/<id>.json." (on "Subagent depth limit reached" tell the user to set subagent_depth 2); then
+  work/llm/<id>.json."; then
   merge.py and overlaps.py; report counts, merge errors, overlaps, remaining batches ("run /classify again or
   loop it"); if nothing pending, just merge and overlaps.
 - `review` (agent abap-reviewer): review_candidates.py; do the review itself; merge.py --apply-review;

@@ -5,7 +5,6 @@
   "instructions": [
     "AGENTS.md"
   ],
-  "subagent_depth": 2,
   "permission": {
     "edit": {
       "*": "deny",
